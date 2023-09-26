@@ -1,22 +1,17 @@
-
-    Initialize a Virtual Environment:
+    Initialize a virtual environments:      (upgrade python)
+python.exe -m pip install --upgrade pip
 python -m venv venv
 
-    windows
-.\venv\Scripts\activate
-    linux
-source venv/bin/activate
+    run environments
+.\venv\Scripts\activate             (linux source venv/bin/activate)
+
+    exit environments
+deactivate  
 
     Set Up a requirements.txt File:
+.\venv\Scripts\activate             (linux source venv/bin/activate)
 python -m pip freeze > requirements.txt
 
-    Deploy to Another PC:
+    Deploy requirements.txt to another PC:
 pip install -r requirements.txt
-
-
-
-    upgrade python
-python.exe -m pip install --upgrade pip
-
-
-deactivate  
+(can do so on environments)
