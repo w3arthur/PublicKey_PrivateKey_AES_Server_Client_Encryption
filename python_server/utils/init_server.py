@@ -3,17 +3,17 @@ if __name__ != "__main__":
     import struct
     import hashlib
     import os
-    import json
 
-    from config import received_request_header_format, maximum_number_of_queued_connections
+    import config
+    from classes import Header, Payload
 
     # Define the updated header structure
-    HEADER_SIZE = struct.calcsize(received_request_header_format)
+    HEADER_SIZE = struct.calcsize(config.received_request_header_format)
 
     def start_server(url, port):
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.bind((url, port))
-        server_socket.listen(maximum_number_of_queued_connections)
+        server_socket.listen(config.maximum_number_of_queued_connections)
 
         print(f"Server is listening on port {port}")
 
@@ -32,7 +32,7 @@ if __name__ != "__main__":
         if len(header_data) == HEADER_SIZE:
             # Unpack the header fields
             client_id, version, code, payload_size = struct.unpack(
-                received_request_header_format, header_data)
+                config.received_request_header_format, header_data)
             print('client id', client_id)
             print('version', version)
             print('code', code)
@@ -45,8 +45,12 @@ if __name__ != "__main__":
                 1025: handle_code_1025,
                 1026: handle_code_1026,
                 1027: handle_code_1027,
-                1028: handle_code_1028
+                1028: handle_code_1028,
+                1029: handle_code_1029,
+                1030: handle_code_1030,
+                1031: handle_code_1031,
             }
+
             if code in code_handlers:
                 code_handlers[code](client_socket, payload_data)
 
@@ -62,22 +66,6 @@ if __name__ != "__main__":
         request_format: str = "!255s"
         req: tuple = struct.unpack(request_format, payload_data)
         return null_terminator_crop(req[0])
-
-    class Header:
-        def __init__(self, version, code, payload_size):
-            self.version = version
-            self.code = code
-            self.payload_size = payload_size
-
-        def serialize(self):
-            return struct.pack("!BHL", self.version, self.code, self.payload_size)
-
-    class Payload:
-        def __init__(self, client_id):
-            self.client_id = client_id
-
-        def serialize(self):
-            return self.client_id.encode('utf-8')[:16].ljust(16, b'\0')
 
     def handle_code_1025(client_socket: object, payload_data: str):
         name: str = get_string_from_255char(payload_data)
@@ -105,14 +93,21 @@ if __name__ != "__main__":
         request1028_format_package_size = "!I"
         pass
 
+    def handle_code_1029(client_socket: object, payload_data: str):
+
+        pass
+
+    def handle_code_1030(client_socket: object, payload_data: str):
+        pass
+
+    def handle_code_1031(client_socket: object, payload_data: str):
+        pass
+
     def handle_registration(client_socket):
-        # טיפול בבקשה לרישום משתמש
         pass
 
     def handle_send_public_key(client_socket):
-        # טיפול בבקשה לשליחת מפתח ציבורי
         pass
 
     def handle_send_encrypted_file(client_socket):
-        # טיפול בבקשה לשליחת קובץ מוצפן
         pass
