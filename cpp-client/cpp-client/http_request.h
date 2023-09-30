@@ -313,8 +313,6 @@ namespace client
         closesocket(client_socket);
         WSACleanup();
         
-
-
         return response;
     }
 
@@ -323,9 +321,60 @@ namespace client
 
 
 
+    void handel_response(const response& response)
+    {
+        switch (response.header.code)
+        {
+        case client::register_success:
+        {
+            response_payload<response2100> payload{};
+
+            std::memcpy(&payload.client_id, response.payload.data(), sizeof(payload));
+            payload.client_id[sizeof(payload) - 1] = '\0';
+
+            std::cout << payload.client_id << std::endl;
+        }
+        break;
+        case register_fail:
+        {
+            response_payload<response2101> response{};
+        }
+        break;
+        case public_key_received_sending_aes:
+        {
+            response_payload<response2102> response{};
+        }
+        break;
+        case file_received_successfully_with_crc:
+        {
+            response_payload<response2103> response{};
+        }
+        break;
+        case approval_message_receiving:
+        {
+            response_payload<response2104> response{};
+        }
+        break;
+        case approval_reconnection_request_send_crypted_aes:
+        {
+            response_payload<response2105> response{};
+        }
+        break;
+        case denined_reconnection_request_client_should_register_again:
+        {
+            response_payload<response2106> response{};
+        }
+        break;
+        case global_server_error:
+        {
+            response_payload<response2107> response{};
+        }
+        break;
+        }
 
 
 
+    }
 
 
 
