@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cpp-client.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -33,6 +33,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="encrypting_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="json_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

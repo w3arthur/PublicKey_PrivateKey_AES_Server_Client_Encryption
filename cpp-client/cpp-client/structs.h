@@ -1,5 +1,7 @@
 #pragma once
-#include <string>
+#include <string>	//try to remove the string
+#include <vector>
+#include <variant>
 
 namespace client
 {
@@ -34,8 +36,9 @@ namespace client
 
 
 	// Request			all request codes
+#pragma pack(push, 1)	//Request structs
 
-	enum request_code : short int
+	enum request_code : uint16_t
 	{
 		registration = 1025,
 		sending_public_key = 1026,
@@ -49,30 +52,34 @@ namespace client
 	template <class Request_Class>
 	struct request_payload : Request_Class { };
 
-	struct request1025 { char name[255]; };
+	struct request1025 { char name[255]{}; };
 	struct request1026
 	{
-		char name[255];
-		char public_key[160];
+		char name[255]{};
+		char public_key[160]{};
 	};
-	struct request1027 { char name[255]; };
-	template <class Request_Class>
+	struct request1027 { char name[255]{}; };
 	struct request1028
 	{
-		unsigned int content_size{};
-		std::string message_content{}; //changed value
+		uint32_t content_size{};
+		std::vector<char> message_content{};
 	};
-	struct request1029 { char file_name[255]; };
-	struct request1030 { char file_name[255]; };
-	struct request1031 { char file_name[255]; };
+	struct request1029 { char file_name[255]{}; };
+	struct request1030 { char file_name[255]{}; };
+	struct request1031 { char file_name[255]{}; };
+
+
+
+	// Define the updated header structure
 
 
 	template <class Request_Class>
-	struct request
+ // Ensure no padding is added to the struct
+	struct reques_header
 	{
 		char client_id[16]{};
-		char version{};
-		request_code code{
+		const uint8_t version{ client::config::client_version };
+		const uint16_t code{ htons(
 			is_the_same<request1025, Request_Class>() ? registration
 			: is_the_same<request1026, Request_Class>() ? sending_public_key
 			: is_the_same<request1027, Request_Class>() ? reconnect_request
@@ -81,11 +88,32 @@ namespace client
 			: is_the_same<request1030, Request_Class>() ? crc_wrorng_resending
 			: is_the_same<request1031, Request_Class>() ? crc_wrorng_forth_time_stop
 			: 0
-		};
-		int payload_size{};
-		request_payload<Request_Class> payload;
-		//std::string payload{};
+		)};
+		uint32_t payload_size{};
 	};
+
+	template <class Request_Class>
+	struct request
+	{
+		reques_header<Request_Class> header{};
+		request_payload<Request_Class> payload{};
+	};
+
+
+#pragma pack(pop) //Request structs end
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	enum response_code : short int
@@ -126,13 +154,17 @@ namespace client
 	struct response2105 { char client_id[16]{}; };
 	struct response2106 { char client_id[16]{}; };
 	struct response2107 { };
+	struct responseError { };
 
 
-	template <class Response_Class>
-	struct response
+	struct response_header
 	{
-		char version{};
-		response_code code{
+		uint8_t version{};
+		uint16_t code{};
+		uint32_t payload_size{};
+
+		/*
+		{ htons(
 			is_the_same<response2100, Response_Class>() ? register_success
 			: is_the_same<response2101, Response_Class>() ? register_fail
 			: is_the_same<response2102, Response_Class>() ? public_key_received_sending_aes
@@ -142,19 +174,19 @@ namespace client
 			: is_the_same<response2106, Response_Class>() ? denined_reconnection_request_client_should_register_again
 			: is_the_same<response2107, Response_Class>() ? global_server_error
 			: 0
-		};
-		unsigned int payload_size{};
-		//std::string payload{};
-		response_payload<Response_Class> payload{};
+		) };
+		*/
 	};
 
 
+	template <class Response_Class>
+	struct response
+	{
+		response_header header{};
+		response_payload<Response_Class> payload{};
+	};
 
-
-
-
-
-
+	using Response = std::variant<response<responseError>, response<response2100>, response<response2101>, response<response2102>, response<response2103>, response<response2104>, response<response2105>, response<response2106>, response<response2107>>;
 
 
 

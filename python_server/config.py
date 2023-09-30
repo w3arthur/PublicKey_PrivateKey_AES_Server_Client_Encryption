@@ -5,6 +5,7 @@ if __name__ != "__main__":
     client_default_port_if_the_file_not_exist: int = 1357
     client_url = 'localhost'  # "0.0.0.0"
 
+    received_request_header_format = "!16sBHI"
     maximum_number_of_queued_connections: int = 5
 
     database_name: str = "`defensive.db`"

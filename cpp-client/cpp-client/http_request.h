@@ -3,7 +3,8 @@
 #include <exception>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
+#include "json_utils.h"
+#include "structs.h"
 #pragma comment(lib, "ws2_32.lib") // Link against the Winsock library
 
 namespace client
@@ -178,6 +179,9 @@ namespace client
             return "";
         }
 
+
+
+
         std::cout << "Sent: " << message << std::endl;
 
         // Receive and store the response from the server
@@ -199,10 +203,166 @@ namespace client
 
 
 
+    // Define a function to deserialize the Header from bytes
+    response_header DeserializeHeader(const std::vector<char>& data) {
+        response_header header;
+        std::memcpy(&header, data.data(), sizeof(header));
+        // Convert network byte order to host byte order for non-char fields
+        header.code = ntohs(header.code);
+        header.payload_size = ntohl(header.payload_size);
+        return header;
+    }
+
+
+
+    template <class Request_Class>
+    Response SendRequest(const std::string& serverIP, const std::string& serverPort, request<Request_Class>& request) {
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+            std::cerr << "WSAStartup failed." << std::endl;
+            return response<responseError>{};
+        }
+
+        // Create a socket
+        SOCKET client_socket = socket(AF_INET, SOCK_STREAM, 0);
+        if (client_socket == INVALID_SOCKET) {
+            std::cerr << "Socket creation failed." << std::endl;
+            WSACleanup();
+            return response<responseError>{};
+        }
+
+        sockaddr_in serverAddr;
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_port = htons(std::stoi(serverPort));
+        inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr);
+
+        // Connect to the server
+        if (connect(client_socket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
+            std::cerr << "Connection to server failed." << std::endl;
+            closesocket(client_socket);
+            WSACleanup();
+            return response<responseError>{};
+        }
+
+        // Prepare the request header
+        //RequestHeader header;
+
+        // Send the header to the server
+
+
+        request.header.payload_size = sizeof(request.payload);
+
+        if (send(client_socket, reinterpret_cast<char*>(&request.header), sizeof(request.header), 0) == SOCKET_ERROR) {
+            std::cerr << "Header send failed." << std::endl;
+            closesocket(client_socket);
+            WSACleanup();
+            return response<responseError>{};
+        }
+        
+        
+
+        // Send the payload (name) to the server
+        if (send(client_socket, reinterpret_cast<char*>(&request.payload), request.header.payload_size, 0) == SOCKET_ERROR) {
+            std::cerr << "Payload send failed." << std::endl;
+            closesocket(client_socket);
+            WSACleanup();
+            return response<responseError>{};
+        }
 
 
 
 
+        // Receive data from the server
+        std::vector<char> received_data(1024); // Adjust buffer size as needed
+        int bytes_received = recv(client_socket, received_data.data(), received_data.size(), 0);
+
+        if (bytes_received == SOCKET_ERROR) {
+            std::cerr << "Error receiving data." << std::endl;
+            closesocket(client_socket);
+            WSACleanup();
+            return response<responseError>{};
+        }
+
+        // Resize the received data buffer to the actual size received
+        received_data.resize(bytes_received);
+
+        // Deserialize the header
+        if (received_data.size() < sizeof(response_header)) {
+            std::cerr << "Received data is too small for the header." << std::endl;
+            closesocket(client_socket);
+            WSACleanup();
+            return response<responseError>{};
+        }
+
+        response_header header = DeserializeHeader(received_data);
+
+        // Extract the payload based on the payload_size from the header
+        if (received_data.size() < sizeof(response_header) + header.payload_size) {
+            std::cerr << "Received data is too small for the payload." << std::endl;
+            closesocket(client_socket);
+            WSACleanup();
+            return response<responseError>{};
+        }
+
+       // Payload payload = DeserializePayload(received_data);
+
+        std::vector<char> payload(received_data[sizeof(response_header)], header.payload_size);
+        // Close the socket and cleanup
+        closesocket(client_socket);
+        WSACleanup();
+
+
+        switch (header.code)
+        {
+        case register_success:
+        {
+            response<response2100> response{};
+            response.header = header;
+            
+            std::memcpy(&response.payload, payload.data(), sizeof(response.payload));
+            return response;
+        }
+        break;
+        case register_fail:
+        {
+            response<response2101> response{};
+        }
+        break;
+        case public_key_received_sending_aes:
+        {
+            response<response2102> response{};
+        }
+        break;
+        case file_received_successfully_with_crc:
+        {
+            response<response2103> response{};
+        }
+        break;
+        case approval_message_receiving:
+        {
+            response<response2104> response{};
+        }
+        break;
+        case approval_reconnection_request_send_crypted_aes:
+        {
+            response<response2105> response{};
+        }
+        break;
+        case denined_reconnection_request_client_should_register_again:
+        {
+            response<response2106> response{};
+        }
+        break;
+        case global_server_error:
+        {
+            response<response2107> response{};
+        }
+        break;
+        }
+
+
+        return response<responseError>{}; //true
+    }
 
 
 
