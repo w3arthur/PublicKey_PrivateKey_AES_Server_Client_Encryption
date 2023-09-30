@@ -100,8 +100,6 @@ namespace client
 	};
 
 
-#pragma pack(pop) //Request structs end
-
 
 
 
@@ -162,32 +160,23 @@ namespace client
 		uint8_t version{};
 		uint16_t code{};
 		uint32_t payload_size{};
-
-		/*
-		{ htons(
-			is_the_same<response2100, Response_Class>() ? register_success
-			: is_the_same<response2101, Response_Class>() ? register_fail
-			: is_the_same<response2102, Response_Class>() ? public_key_received_sending_aes
-			: is_the_same<response2103, Response_Class>() ? file_received_successfully_with_crc
-			: is_the_same<response2104, Response_Class>() ? approval_message_receiving
-			: is_the_same<response2105, Response_Class>() ? approval_reconnection_request_send_crypted_aes
-			: is_the_same<response2106, Response_Class>() ? denined_reconnection_request_client_should_register_again
-			: is_the_same<response2107, Response_Class>() ? global_server_error
-			: 0
-		) };
-		*/
 	};
 
 
-	template <class Response_Class>
+
+
 	struct response
 	{
 		response_header header{};
-		response_payload<Response_Class> payload{};
+		std::vector<char> payload{};
+		//response_payload<Response_Class> payload{};
 	};
 
-	using Response = std::variant<response<responseError>, response<response2100>, response<response2101>, response<response2102>, response<response2103>, response<response2104>, response<response2105>, response<response2106>, response<response2107>>;
+	//using Response = std::variant<response<responseError>, response<response2100>, response<response2101>, response<response2102>, response<response2103>, response<response2104>, response<response2105>, response<response2106>, response<response2107>>;
 
 
 
+
+
+#pragma pack(pop) //Request structs end
 }

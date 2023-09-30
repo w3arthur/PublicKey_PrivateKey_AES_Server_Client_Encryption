@@ -52,9 +52,6 @@ if __name__ != "__main__":
 
         # print(f"Received: {request}")
 
-        response: str = "hello111"
-        client_socket.send(response.encode())
-
     def null_terminator_crop(string: str) -> str:
         name_end_index: int = string.find(b'\0')
         if name_end_index != -1:
@@ -63,12 +60,38 @@ if __name__ != "__main__":
 
     def get_string_from_255char(payload_data: str) -> str:
         request_format: str = "!255s"
-        req = struct.unpack(request_format, payload_data)
+        req: tuple = struct.unpack(request_format, payload_data)
         return null_terminator_crop(req[0])
+
+    class Header:
+        def __init__(self, version, code, payload_size):
+            self.version = version
+            self.code = code
+            self.payload_size = payload_size
+
+        def serialize(self):
+            return struct.pack("!BHL", self.version, self.code, self.payload_size)
+
+    class Payload:
+        def __init__(self, client_id):
+            self.client_id = client_id
+
+        def serialize(self):
+            return self.client_id.encode('utf-8')[:16].ljust(16, b'\0')
 
     def handle_code_1025(client_socket: object, payload_data: str):
         name: str = get_string_from_255char(payload_data)
         print('name', name)
+        response: str = "hello111"
+        version = 1
+        code = 2100
+        client_id = "123456789012345"
+        header = Header(version, code, len(client_id))
+        payload = Payload(client_id)
+        header_bytes = header.serialize()
+        payload_bytes = payload.serialize()
+        message = header_bytes + payload_bytes
+        client_socket.send(message)
 
     def handle_code_1026(client_socket: object, payload_data: str):
         request1026_format: str = "!255s160s"

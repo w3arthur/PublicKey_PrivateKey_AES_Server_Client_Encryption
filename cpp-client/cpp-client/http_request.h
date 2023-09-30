@@ -216,11 +216,11 @@ namespace client
 
 
     template <class Request_Class>
-    Response SendRequest(const std::string& serverIP, const std::string& serverPort, request<Request_Class>& request) {
+    response SendRequest(const std::string& serverIP, const std::string& serverPort, request<Request_Class>& request) {
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             std::cerr << "WSAStartup failed." << std::endl;
-            return response<responseError>{};
+            return {};
         }
 
         // Create a socket
@@ -228,7 +228,7 @@ namespace client
         if (client_socket == INVALID_SOCKET) {
             std::cerr << "Socket creation failed." << std::endl;
             WSACleanup();
-            return response<responseError>{};
+            return {};
         }
 
         sockaddr_in serverAddr;
@@ -241,7 +241,7 @@ namespace client
             std::cerr << "Connection to server failed." << std::endl;
             closesocket(client_socket);
             WSACleanup();
-            return response<responseError>{};
+            return {};
         }
 
         // Prepare the request header
@@ -256,7 +256,7 @@ namespace client
             std::cerr << "Header send failed." << std::endl;
             closesocket(client_socket);
             WSACleanup();
-            return response<responseError>{};
+            return {};
         }
         
         
@@ -266,7 +266,7 @@ namespace client
             std::cerr << "Payload send failed." << std::endl;
             closesocket(client_socket);
             WSACleanup();
-            return response<responseError>{};
+            return {};
         }
 
 
@@ -280,10 +280,11 @@ namespace client
             std::cerr << "Error receiving data." << std::endl;
             closesocket(client_socket);
             WSACleanup();
-            return response<responseError>{};
+            return {};
         }
 
         // Resize the received data buffer to the actual size received
+        
         received_data.resize(bytes_received);
 
         // Deserialize the header
@@ -291,77 +292,30 @@ namespace client
             std::cerr << "Received data is too small for the header." << std::endl;
             closesocket(client_socket);
             WSACleanup();
-            return response<responseError>{};
+            return {};
         }
 
-        response_header header = DeserializeHeader(received_data);
+        response response{};
+        response.header = DeserializeHeader(received_data);
 
         // Extract the payload based on the payload_size from the header
-        if (received_data.size() < sizeof(response_header) + header.payload_size) {
+        if (received_data.size() < sizeof(response_header) + response.header.payload_size) {
             std::cerr << "Received data is too small for the payload." << std::endl;
             closesocket(client_socket);
             WSACleanup();
-            return response<responseError>{};
+            return {};
         }
 
        // Payload payload = DeserializePayload(received_data);
-
-        std::vector<char> payload(received_data[sizeof(response_header)], header.payload_size);
+        response.payload = std::vector<char>(received_data.begin() + sizeof(response_header), received_data.begin() + sizeof(response_header) + response.header.payload_size);
+      
         // Close the socket and cleanup
         closesocket(client_socket);
         WSACleanup();
+        
 
 
-        switch (header.code)
-        {
-        case register_success:
-        {
-            response<response2100> response{};
-            response.header = header;
-            
-            std::memcpy(&response.payload, payload.data(), sizeof(response.payload));
-            return response;
-        }
-        break;
-        case register_fail:
-        {
-            response<response2101> response{};
-        }
-        break;
-        case public_key_received_sending_aes:
-        {
-            response<response2102> response{};
-        }
-        break;
-        case file_received_successfully_with_crc:
-        {
-            response<response2103> response{};
-        }
-        break;
-        case approval_message_receiving:
-        {
-            response<response2104> response{};
-        }
-        break;
-        case approval_reconnection_request_send_crypted_aes:
-        {
-            response<response2105> response{};
-        }
-        break;
-        case denined_reconnection_request_client_should_register_again:
-        {
-            response<response2106> response{};
-        }
-        break;
-        case global_server_error:
-        {
-            response<response2107> response{};
-        }
-        break;
-        }
-
-
-        return response<responseError>{}; //true
+        return response;
     }
 
 
