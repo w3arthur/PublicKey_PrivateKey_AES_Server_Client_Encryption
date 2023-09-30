@@ -88,7 +88,8 @@
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
-</Command>
+mkdir $(SolutionDir)Run
+xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -112,7 +113,9 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"</Command>
+      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
+mkdir $(SolutionDir)Run
+xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -131,7 +134,9 @@
       <AdditionalDependencies>cryptopp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"</Command>
+      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
+mkdir $(SolutionDir)Run
+xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -154,7 +159,9 @@
       <AdditionalDependencies>cryptopp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"</Command>
+      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
+mkdir $(SolutionDir)Run
+xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
