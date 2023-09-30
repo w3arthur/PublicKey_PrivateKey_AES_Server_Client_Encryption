@@ -5,7 +5,7 @@ if __name__ != "__main__":
     import os
 
     import config
-    from classes import Header, Payload
+    from utils.classes import Header, Payload
 
     # Define the updated header structure
     HEADER_SIZE = struct.calcsize(config.received_request_header_format)
