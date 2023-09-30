@@ -8,6 +8,6 @@ if __name__ != "__main__":
     received_request_header_format = "!16sBHI"
     maximum_number_of_queued_connections: int = 5
 
-    database_name: str = "`defensive.db`"
+    database_name: str = "defensive.db"
     clients_table_name: str = "clients"
     files_table_name: str = "files"
