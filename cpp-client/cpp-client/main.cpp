@@ -14,6 +14,8 @@
 int main() 
 {
 
+
+
     client::transfer transfer = client::get_transfer();
     client::identyfier identyfier = client::get_identyfier();
     if (!identyfier.is_available)
@@ -38,7 +40,7 @@ int main()
     //std::string serverResponse = client::SendMessageToServer(serverIP, serverPort, message);
 
     client::response res = client::SendRequest(serverIP, serverPort, request);
-    if (res.header.code != client::response_code::response_error) { //!serverResponse.empty()
+    if (res.get_response_code() != client::response_code::response_error) { //!serverResponse.empty()
         std::cout << "Received: " << "ok" << std::endl;
         handel_response(res);
 

@@ -15,17 +15,6 @@ namespace client
 
 
 
-    // Define a function to deserialize the Header from bytes
-    response_header DeserializeHeader(const std::vector<char>& data) {
-        response_header header;
-        std::memcpy(&header, data.data(), sizeof(header));
-        // Convert network byte order to host byte order for non-char fields
-        header.code = ntohs(header.code);
-        header.payload_size = ntohl(header.payload_size);
-        return header;
-    }
-
-
 
     template <class Request_Class>
     response SendRequest(const std::string& serverIP, const std::string& serverPort, request<Request_Class>& request) {
@@ -107,8 +96,7 @@ namespace client
             return {};
         }
 
-        response response{};
-        response.header = DeserializeHeader(received_data);
+        response response(received_data);
 
         // Extract the payload based on the payload_size from the header
         if (received_data.size() < sizeof(response_header) + response.header.payload_size) {
@@ -131,11 +119,13 @@ namespace client
 
 
 
+    struct fdghd {
+        void hi() {}
+    };
 
-
-    void handel_response(const response& response)
+    void handel_response(response& response)
     {
-        switch (response.header.code)
+        switch (response.get_response_code())
         {
         case response_code::register_success:
         {

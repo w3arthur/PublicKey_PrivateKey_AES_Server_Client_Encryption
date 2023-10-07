@@ -1,8 +1,11 @@
 #pragma once
 #include <string>	//try to remove the string
+#include <map>
 #include <vector>
 #include <variant>
 #include <typeindex>
+#include <winsock2.h>
+
 
 namespace client
 {
@@ -99,9 +102,11 @@ namespace client
 	{
 		char client_id[16]{};
 		const uint8_t version{ client::config::client_version };
-		const request_code code{ htons(request_code_map[typeid(Request_Class)]) };
+		const request_code code{ request_code_map.at(typeid(Request_Class)) };
 		uint32_t payload_size{};
 	};
+
+#pragma pack(pop)
 
 	template <class Request_Class>
 	struct request
@@ -109,7 +114,7 @@ namespace client
 		reques_header<Request_Class> header{};
 		request_payload<Request_Class> payload{};
 	};
-#pragma pack(pop)
+
 
 
 
@@ -177,21 +182,61 @@ namespace client
 
 	struct response_header
 	{
+		response_header() = default;
+		response_header(const std::vector<char>& data)
+		{
+			std::memcpy(this, data.data(), sizeof(this));
+			this->payload_size = ntohl(this->payload_size);
+		}
+
 		uint8_t version{};
-		response_code code{ response_code::response_error };
+		short int response_code_value{};//0
 		uint32_t payload_size{};
+		
 	};
+#pragma pack(pop)
+
 
 
 
 	struct response
 	{
+		response() = default;
+		response(const std::vector<char>& data) : header(data), payload()
+		{
+			payload.reserve(header.payload_size);
+			set_response_code(header.response_code_value);
+		}
+
+		response_code get_response_code()
+		{
+			return m_response_code;
+		}
+
 		response_header header{};
 		std::vector<char> payload{};
 		//response_payload<Response_Class> payload{};
+
+	private:
+		void set_response_code(short int response_code_value)
+		{
+			switch (ntohs(response_code_value))
+			{
+			case 2100: m_response_code = response_code::register_success; break;
+			case 2101: m_response_code = response_code::register_fail; break;
+			case 2102: m_response_code = response_code::public_key_received_sending_aes; break;
+			case 2103: m_response_code = response_code::file_received_successfully_with_crc; break;
+			case 2104: m_response_code = response_code::approval_message_receiving; break;
+			case 2105: m_response_code = response_code::approval_reconnection_request_send_crypted_aes; break;
+			case 2106: m_response_code = response_code::denined_reconnection_request_client_should_register_again; break;
+			case 2107: m_response_code = response_code::global_server_error; break;
+			default: response_code::response_error;
+			}
+		}
+
+		response_code m_response_code{ response_code::response_error };
 	};
 
-#pragma pack(pop)
 
 
 
