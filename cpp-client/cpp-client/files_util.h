@@ -24,11 +24,11 @@ namespace client
         std::getline(inputFile, line);
         {
             std::istringstream ss(line);
-            std::getline(ss, transfer.url, ':');
+            std::getline(ss, transfer.ip_address, ':');
             std::getline(ss, line);
-            transfer.port = std::stoi(line);
+            transfer.port = static_cast<unsigned short int>(std::stoul(line));
         }
-        std::getline(inputFile, transfer.sender_name);
+        std::getline(inputFile, transfer.name);
         std::getline(inputFile, transfer.file_address);
 
         inputFile.close();
@@ -57,9 +57,8 @@ namespace client
         identyfier identyfier;
         try
         {
-            std::string line;
             std::getline(inputFile, identyfier.name);
-            std::getline(inputFile, identyfier.unique);
+            std::getline(inputFile, identyfier.id);
             std::getline(inputFile, identyfier.private_key);
             identyfier.is_available = true;
         }
@@ -79,7 +78,7 @@ namespace client
         std::ofstream rsaKeyFile("info.me");
         rsaKeyFile << identyfieri.name << std::endl;
         rsaKeyFile << identyfieri.private_key << std::endl;
-        rsaKeyFile << identyfieri.unique << std::endl;
+        rsaKeyFile << identyfieri.id << std::endl;
         rsaKeyFile.close();
     }
 

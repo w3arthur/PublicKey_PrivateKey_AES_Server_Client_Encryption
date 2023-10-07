@@ -2,20 +2,22 @@
 #include <string>	//try to remove the string
 #include <map>
 #include <vector>
+#include <string>
 #include <variant>
 #include <typeindex>
-#include <winsock2.h>
+#include <winsock2.h> // TODO: remove it from here
 
+#include <cstring>
 
 namespace client
 {
-
+	//TODO: set sizes
 	struct transfer
 	{
 		//bool is_available;
-		std::string url{};
-		unsigned int port{};
-		std::string sender_name{};
+		std::string ip_address{};
+		unsigned short int port{};
+		std::string name{};
 		std::string file_address{};
 	};
 
@@ -23,7 +25,7 @@ namespace client
 	{
 		bool is_available{};
 		std::string name{};
-		std::string unique{};	//ascii hex
+		std::string id{};	//unique//ascii hex
 		std::string private_key{};
 	};
 
@@ -33,6 +35,7 @@ namespace client
 
 	// Request			all request codes
 	//Request structs
+
 
 	enum class request_code : uint16_t
 	{
@@ -54,16 +57,21 @@ namespace client
 
 	struct request1025 
 	{
+		void set_name(std::string name)
+		{
+			strncpy_s(this->name, name.c_str(), sizeof(this->name));
+			this->name[name.size()] = '\0';
+		}
 		char name[255]{};
 	};
-	struct request1026
+	struct request1026 : request1025
 	{
-		char name[255]{};
+		//char name[255]{};
 		char public_key[160]{};
 	};
-	struct request1027 
+	struct request1027 : request1025
 	{
-		char name[255]{}; 
+		//char name[255]{}; 
 	};
 	struct request1028
 	{
@@ -74,53 +82,57 @@ namespace client
 	{
 		char file_name[255]{}; 
 	};
-	struct request1030 
+	struct request1030 : request1029
 	{ 
-		char file_name[255]{};
+		//char file_name[255]{};
 	};
-	struct request1031 
+	struct request1031 : request1029
 	{
-		char file_name[255]{};
+		//char file_name[255]{};
 	};
 
 
-	const std::map<std::type_index, request_code> request_code_map = {
-	{typeid(request1025), request_code::registration},
-	{typeid(request1026), request_code::sending_public_key},
-	{typeid(request1027), request_code::reconnect_request},
-	{typeid(request1028), request_code::file_transfer},
-	{typeid(request1029), request_code::crc_request},
-	{typeid(request1030), request_code::crc_wrorng_resending},
-	{typeid(request1031), request_code::crc_wrorng_forth_time_stop},
-	};
 
+	const std::map<std::type_index, uint16_t> request_code_map = {
+		{typeid(request1025), 1025}, //
+		{typeid(request1026), 1026}, //request_code::sending_public_key
+		{typeid(request1027), 1027}, //request_code::reconnect_request
+		{typeid(request1028), 1028}, //request_code::file_transfer
+		{typeid(request1029), 1029}, //request_code::crc_request
+		{typeid(request1030), 1030}, //request_code::crc_wrorng_resending
+		{typeid(request1031), 1031}, //request_code::crc_wrorng_forth_time_stop
+	};
 
 
 	// Define the updated header structure
 	template <class Request_Class>
-	struct reques_header
+	struct request_header
 	{
-		char client_id[16]{};
-		const uint8_t version{ client::config::client_version };
-		const request_code code{ request_code_map.at(typeid(Request_Class)) };
+		//request_header()
+		//{
+		//	strncpy_s(this->client_id, config::client_id, sizeof(this->client_id));
+		//}
+		char client_id[16]{"4465345345"};
+		uint8_t version{ config::client_version };
+		uint16_t code{ request_code_map.at(typeid(Request_Class)) };
 		uint32_t payload_size{};
 	};
 
-#pragma pack(pop)
+
 
 	template <class Request_Class>
 	struct request
 	{
-		reques_header<Request_Class> header{};
+		request_header<Request_Class> header{};
 		request_payload<Request_Class> payload{};
 	};
+#pragma pack(pop)
 
 
 
 
 
-
-	enum class response_code : short int
+	enum class response_code : uint16_t
 	{
 		response_error = 0,
 		register_success = 2100,
@@ -150,27 +162,29 @@ namespace client
 	struct response2101 
 	{
 	};
-	struct response2102
+	struct response2102 : response2100
 	{
-		char client_id[16]{};
+		//char client_id[16]{};
 		std::string aes_key{};
 	};
-	struct response2103
+	struct response2103 : response2100
 	{
-		char client_id[16]{};
+		//char client_id[16]{};
 		unsigned int content_size{};	//after encryption
 		char file_name[255]{};
 		char cksum[4]{}; //crc
 	};
-	struct response2104 {
-		char client_id[16]{}; 
-	};
-	struct response2105 {
-		char client_id[16]{}; 
-	};
-	struct response2106 
+	struct response2104 : response2100 
 	{
-		char client_id[16]{}; 
+		//char client_id[16]{}; 
+	};
+	struct response2105 : response2100
+	{
+		//char client_id[16]{}; 
+	};
+	struct response2106 : response2100
+	{
+		//char client_id[16]{}; 
 	};
 	struct response2107
 	{
@@ -218,7 +232,7 @@ namespace client
 		//response_payload<Response_Class> payload{};
 
 	private:
-		void set_response_code(short int response_code_value)
+		void set_response_code(uint16_t response_code_value)
 		{
 			switch (ntohs(response_code_value))
 			{

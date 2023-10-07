@@ -63,7 +63,7 @@ if __name__ != "__main__":
         return None
 
     def get_string_from_255char(payload_data: str) -> str:
-        request_format: str = "!255s"
+        request_format: str = "<255s"
         req: tuple = struct.unpack(request_format, payload_data)
         return null_terminator_crop(req[0])
 
@@ -71,10 +71,9 @@ if __name__ != "__main__":
         name: str = get_string_from_255char(payload_data)
         print('name', name)
         response: str = "hello111"
-        version = 1
-        code = 2100
+        code: int = 2100
         client_id = "123456789012345"
-        header = Header(version, code, len(client_id))
+        header = Header(code, int(len(client_id)))
         payload = Payload(client_id)
         header_bytes = header.serialize()
         payload_bytes = payload.serialize()
@@ -82,7 +81,7 @@ if __name__ != "__main__":
         client_socket.send(message)
 
     def handle_code_1026(client_socket: object, payload_data: str):
-        request1026_format: str = "!255s160s"
+        request1026_format: str = "<255s160s"
         name, public_key = struct.unpack(request1026_format, payload_data)
         pass
 
@@ -90,7 +89,7 @@ if __name__ != "__main__":
         pass
 
     def handle_code_1028(client_socket: object, payload_data: str):
-        request1028_format_package_size = "!I"
+        request1028_format_package_size = "<I"
         pass
 
     def handle_code_1029(client_socket: object, payload_data: str):

@@ -17,7 +17,7 @@ namespace client
 
 
     template <class Request_Class>
-    response SendRequest(const std::string& serverIP, const std::string& serverPort, request<Request_Class>& request) {
+    response send_request(const std::string& serverIP, unsigned short int serverPort, request<Request_Class>& request) {
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             std::cerr << "WSAStartup failed." << std::endl;
@@ -34,7 +34,7 @@ namespace client
 
         sockaddr_in serverAddr;
         serverAddr.sin_family = AF_INET;
-        serverAddr.sin_port = htons(std::stoi(serverPort));
+        serverAddr.sin_port = htons(serverPort);
         inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr);
 
         // Connect to the server
@@ -117,11 +117,6 @@ namespace client
     }
 
 
-
-
-    struct fdghd {
-        void hi() {}
-    };
 
     void handel_response(response& response)
     {

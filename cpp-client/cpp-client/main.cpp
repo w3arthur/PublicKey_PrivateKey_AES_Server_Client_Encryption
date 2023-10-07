@@ -15,40 +15,28 @@ int main()
 {
 
 
-
+    // TODO: add error handler
     client::transfer transfer = client::get_transfer();
     client::identyfier identyfier = client::get_identyfier();
-    if (!identyfier.is_available)
-    {
+    std::string name = !identyfier.is_available ? transfer.name : transfer.name;
 
-    }
+    client::request<client::request1025> request{};
+    request.payload.set_name(name);
 
-    //std::cout << client::SendHttpRequest("http://example.com/") << std::endl;
-
-
-    std::string serverIP = "127.0.0.1"; // Change to your server's IP address
-    std::string serverPort = "1234";   // Change to the server's listening port
-    std::string name = "hi24242";
-
-    client::request<client::request1025> request;
-    strncpy_s(request.header.client_id, client::config::client_id, sizeof(request.header.client_id));
     //request.header.payload_size = htonl(name.length());
-
-    strncpy_s(request.payload.name, name.c_str(), sizeof(request.payload.name));
-    request.payload.name[name.size()/* - 1*/] = '\0';
-
     //std::string serverResponse = client::SendMessageToServer(serverIP, serverPort, message);
 
-    client::response res = client::SendRequest(serverIP, serverPort, request);
-    if (res.get_response_code() != client::response_code::response_error) { //!serverResponse.empty()
-        std::cout << "Received: " << "ok" << std::endl;
-        handel_response(res);
-
-    }
-    else 
+    client::response register_request = client::send_request(transfer.ip_address, transfer.port, request);
+    if (register_request.get_response_code() == client::response_code::response_error) 
     {
         std::cerr << "Message sending failed or no response received." << std::endl;
     }
+    else 
+    {
+        std::cout << "Received: " << "ok" << std::endl;
+        handel_response(register_request);
+    }
+
 
 
 

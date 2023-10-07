@@ -3,12 +3,11 @@ if __name__ != "__main__":
     import config
 
     class Header:
-        version: int = None
+        version: int = config.server_version
         code: int = None
         payload_size: int = None
 
         def __init__(self, code, payload_size):
-            self.version = config.server_version
             self.code = code
             self.payload_size = payload_size
 

@@ -4,10 +4,7 @@
 namespace client::config
 {
 	const uint8_t client_version{3};
-	char client_id[16]{"demo id"};	//to delete
-
-
+	char client_id[16]{ "0\0" }; //will receive from the server	//TODO: set it
 	const char transfer_info_file_name[100]{ "transfer.info" };
 	const char me_info_file_name[100]{ "me.info" };
-
 }
