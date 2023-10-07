@@ -8,4 +8,6 @@ if __name__ != "__main__":
                 if port_number_string.isdigit():
                     port_number = int(port_number_string)
                     return port_number
-        return None
+                raise ValueError(
+                    f"Port File {file_name} not contain valid port")
+        raise FileNotFoundError(f"Port File {file_name} not exists")

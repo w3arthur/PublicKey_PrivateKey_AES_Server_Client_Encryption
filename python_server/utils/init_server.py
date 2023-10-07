@@ -15,7 +15,7 @@ if __name__ != "__main__":
         server_socket.bind((url, port))
         server_socket.listen(config.maximum_number_of_queued_connections)
 
-        print(f"Server is listening on port {port}")
+        print("\033[92m", f"Server is listening on port {port}", "\033[0m")
 
         while True:
             client_socket, client_address = server_socket.accept()

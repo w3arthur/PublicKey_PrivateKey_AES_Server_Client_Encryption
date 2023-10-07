@@ -6,11 +6,11 @@ if __name__ != "__main__":
         conn = sqlite3.connect(database_name)
         cursor = conn.cursor()
         query = f'''CREATE TABLE IF NOT EXISTS {clients_table_name} (
-                ID INTEGER PRIMARY KEY,
-                Name TEXT,
-                PublicKey BLOB,
+                ID VARCHAR(160) PRIMARY KEY,
+                Name VARCHAR(255),
+                PublicKey VARCHAR(160),
                 LastSeen DATETIME,
-                AESKey BLOB
+                AESKey VARCHAR(128)
             )'''
 
         cursor.execute(query)
@@ -22,9 +22,9 @@ if __name__ != "__main__":
         conn = sqlite3.connect(database_name)
         cursor = conn.cursor()
         query = f'''CREATE TABLE IF NOT EXISTS {files_table_name} (
-                ID INTEGER PRIMARY KEY,
-                FileName TEXT,
-                PathName TEXT,
+                ID VARCHAR(160) PRIMARY KEY,
+                FileName VARCHAR(255),
+                PathName VARCHAR(255),
                 Verified BOOL
             )'''
 

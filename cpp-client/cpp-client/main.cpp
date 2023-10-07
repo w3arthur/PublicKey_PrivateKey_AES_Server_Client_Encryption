@@ -38,7 +38,7 @@ int main()
     //std::string serverResponse = client::SendMessageToServer(serverIP, serverPort, message);
 
     client::response res = client::SendRequest(serverIP, serverPort, request);
-    if (res.header.code != 0 ) { //!serverResponse.empty()
+    if (res.header.code != client::response_code::response_error) { //!serverResponse.empty()
         std::cout << "Received: " << "ok" << std::endl;
         handel_response(res);
 
