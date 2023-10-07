@@ -6,6 +6,7 @@ if __name__ != "__main__":
 
     import config
     from utils.classes import Header, Payload
+    from utils.sql_lite_util import check_client, register_client
 
     # Define the updated header structure
     HEADER_SIZE = struct.calcsize(config.received_request_header_format)
@@ -60,20 +61,26 @@ if __name__ != "__main__":
         name_end_index: int = string.find(b'\0')
         if name_end_index != -1:
             return string[:name_end_index]
-        return None
+        return string
 
     def get_string_from_255char(payload_data: str) -> str:
         request_format: str = "<255s"
-        req: tuple = struct.unpack(request_format, payload_data)
-        return null_terminator_crop(req[0])
+        str1,  = struct.unpack(request_format, payload_data)
+        return null_terminator_crop(str1).decode('utf-8')
 
     def handle_code_1025(client_socket: object, payload_data: str):
         name: str = get_string_from_255char(payload_data)
-        print('name', name)
-        response: str = "hello111"
         code: int = 2100
-        client_id = "123456789012345"
-        header = Header(code, int(len(client_id)))
+        if (check_client(name)):  # is a client
+            code = 2101
+            header = Header(code, 0)
+            header_bytes = header.serialize()
+            message = header_bytes
+            client_socket.send(message)
+            return
+
+        client_id: str = register_client(name)
+        header = Header(code, len(client_id))
         payload = Payload(client_id)
         header_bytes = header.serialize()
         payload_bytes = payload.serialize()

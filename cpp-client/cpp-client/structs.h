@@ -146,53 +146,7 @@ namespace client
 	};
 
 
-
-
-	// Response			all response codes
 #pragma pack(push, 1)
-	template <class Response_Class>
-	struct response_payload : Response_Class 
-	{
-	};
-
-	struct response2100 
-	{
-		char client_id[16]{}; 
-	};
-	struct response2101 
-	{
-	};
-	struct response2102 : response2100
-	{
-		//char client_id[16]{};
-		std::string aes_key{};
-	};
-	struct response2103 : response2100
-	{
-		//char client_id[16]{};
-		unsigned int content_size{};	//after encryption
-		char file_name[255]{};
-		char cksum[4]{}; //crc
-	};
-	struct response2104 : response2100 
-	{
-		//char client_id[16]{}; 
-	};
-	struct response2105 : response2100
-	{
-		//char client_id[16]{}; 
-	};
-	struct response2106 : response2100
-	{
-		//char client_id[16]{}; 
-	};
-	struct response2107
-	{
-	};
-	struct responseError 
-	{
-	};
-
 
 	struct response_header
 	{
@@ -206,12 +160,8 @@ namespace client
 		uint8_t version{};
 		short int response_code_value{};//0
 		uint32_t payload_size{};
-		
+
 	};
-#pragma pack(pop)
-
-
-
 
 	struct response
 	{
@@ -250,6 +200,65 @@ namespace client
 
 		response_code m_response_code{ response_code::response_error };
 	};
+
+
+	// Response			all response codes
+
+	template <class Response_Class>
+	struct response_payload : Response_Class 
+	{
+		response_payload() = default; //TODO: delele
+		response_payload(response& _response)
+		{
+			std::memcpy(this, _response.payload.data(), _response.header.payload_size);
+		}
+	};
+
+	struct response2100 
+	{
+		char client_id[16]{};
+	};
+	struct response2101 
+	{
+	};
+	struct response2102 : response2100
+	{
+		//char client_id[16]{};
+		std::string aes_key{};
+	};
+	struct response2103 : response2100
+	{
+		//char client_id[16]{};
+		unsigned int content_size{};	//after encryption
+		char file_name[255]{};
+		char cksum[4]{}; //crc
+	};
+	struct response2104 : response2100 
+	{
+		//char client_id[16]{}; 
+	};
+	struct response2105 : response2100
+	{
+		//char client_id[16]{}; 
+	};
+	struct response2106 : response2100
+	{
+		//char client_id[16]{}; 
+	};
+	struct response2107
+	{
+	};
+	struct responseError 
+	{
+	};
+
+
+
+#pragma pack(pop)
+
+
+
+
 
 
 

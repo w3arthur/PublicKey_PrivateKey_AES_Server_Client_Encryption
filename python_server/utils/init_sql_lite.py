@@ -9,7 +9,7 @@ if __name__ != "__main__":
                 ID VARCHAR(160) PRIMARY KEY,
                 Name VARCHAR(255),
                 PublicKey VARCHAR(160),
-                LastSeen DATETIME,
+                LastSeen DATETIME DEFAULT CURRENT_TIMESTAMP,
                 AESKey VARCHAR(128)
             )'''
 

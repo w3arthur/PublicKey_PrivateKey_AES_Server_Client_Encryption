@@ -18,10 +18,10 @@ int main()
     // TODO: add error handler
     client::transfer transfer = client::get_transfer();
     client::identyfier identyfier = client::get_identyfier();
-    std::string name = !identyfier.is_available ? transfer.name : transfer.name;
+    client::config::name = !identyfier.is_available ? transfer.name : transfer.name;
 
     client::request<client::request1025> request{};
-    request.payload.set_name(name);
+    request.payload.set_name(client::config::name);
 
     //request.header.payload_size = htonl(name.length());
     //std::string serverResponse = client::SendMessageToServer(serverIP, serverPort, message);

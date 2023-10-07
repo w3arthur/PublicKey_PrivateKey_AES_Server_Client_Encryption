@@ -3,6 +3,7 @@
 #include <exception>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <cstring>
 #include "json_utils.h"
 #include "structs.h"
 #pragma comment(lib, "ws2_32.lib") // Link against the Winsock library
@@ -124,17 +125,25 @@ namespace client
         {
         case response_code::register_success:
         {
-            response_payload<response2100> payload{};
-
-            std::memcpy(&payload.client_id, response.payload.data(), sizeof(payload));
+            response_payload<response2100> payload(response);
+            std::memcpy(&payload, response.payload.data(), response.header.payload_size);
             payload.client_id[sizeof(payload) - 1] = '\0';
 
-            std::cout << payload.client_id << std::endl;
+            config::set_client_id(payload.client_id);
+
+            std::cout << config::client_id << std::endl;
+            std::cout << sizeof(config::client_id) << std::endl;
+            //client::request<client::request1026> request{};
+            //request.payload.set_name(config::name);
+
+
         }
         break;
         case response_code::register_fail:
         {
-            response_payload<response2101> response{};
+            //retry counter
+            exit(1);
+            //response_payload<response2101> response{};
         }
         break;
         case response_code::public_key_received_sending_aes:
