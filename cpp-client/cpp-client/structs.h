@@ -66,6 +66,11 @@ namespace client
 	};
 	struct request1026 : request1025
 	{
+		void set_public_key(const char* _public_key)
+		{
+			strncpy_s(this->public_key, _public_key, sizeof(this->public_key));
+			//this->name[name.size()] = '\0';
+		}
 		//char name[255]{};
 		char public_key[160]{};
 	};
@@ -75,11 +80,21 @@ namespace client
 	};
 	struct request1028
 	{
+		void set_content_size(uint32_t _content_size)
+		{
+			content_size = _content_size;
+			message_content.reserve(_content_size);
+		}
 		uint32_t content_size{};
 		std::vector<char> message_content{};
 	};
 	struct request1029 
 	{
+		void set_file_name(const char* _file_name)
+		{
+			strncpy_s(this->file_name, _file_name, sizeof(this->file_name));
+			//this->name[name.size()] = '\0';
+		}
 		char file_name[255]{}; 
 	};
 	struct request1030 : request1029
@@ -93,14 +108,14 @@ namespace client
 
 
 
-	const std::map<std::type_index, uint16_t> request_code_map = {
-		{typeid(request1025), 1025}, //
-		{typeid(request1026), 1026}, //request_code::sending_public_key
-		{typeid(request1027), 1027}, //request_code::reconnect_request
-		{typeid(request1028), 1028}, //request_code::file_transfer
-		{typeid(request1029), 1029}, //request_code::crc_request
-		{typeid(request1030), 1030}, //request_code::crc_wrorng_resending
-		{typeid(request1031), 1031}, //request_code::crc_wrorng_forth_time_stop
+	const std::map<std::type_index, request_code> request_code_map = {
+		{typeid(request1025), request_code::registration},
+		{typeid(request1026), request_code::sending_public_key},
+		{typeid(request1027), request_code::reconnect_request},
+		{typeid(request1028), request_code::file_transfer},
+		{typeid(request1029), request_code::crc_request},
+		{typeid(request1030), request_code::crc_wrorng_resending},
+		{typeid(request1031), request_code::crc_wrorng_forth_time_stop},
 	};
 
 
@@ -108,16 +123,15 @@ namespace client
 	template <class Request_Class>
 	struct request_header
 	{
-		//request_header()
-		//{
-		//	strncpy_s(this->client_id, config::client_id, sizeof(this->client_id));
-		//}
-		char client_id[16]{"4465345345"};
-		uint8_t version{ config::client_version };
-		uint16_t code{ request_code_map.at(typeid(Request_Class)) };
+		request_header()
+		{
+			strncpy_s(this->client_id, config::client_id, sizeof(this->client_id));
+		}
+		char client_id[16]{};
+		const uint8_t version{ config::client_version };
+		const uint16_t code{ static_cast<uint16_t>(request_code_map.at(typeid(Request_Class))) };
 		uint32_t payload_size{};
 	};
-
 
 
 	template <class Request_Class>
@@ -126,6 +140,7 @@ namespace client
 		request_header<Request_Class> header{};
 		request_payload<Request_Class> payload{};
 	};
+
 #pragma pack(pop)
 
 
@@ -134,7 +149,6 @@ namespace client
 
 	enum class response_code : uint16_t
 	{
-		response_error = 0,
 		register_success = 2100,
 		register_fail = 2101,
 		public_key_received_sending_aes = 2102,
@@ -143,6 +157,7 @@ namespace client
 		approval_reconnection_request_send_crypted_aes = 2105,
 		denined_reconnection_request_client_should_register_again = 2106,	//the client not registered or without public key
 		global_server_error = 2107,
+		response_error = 0,
 	};
 
 

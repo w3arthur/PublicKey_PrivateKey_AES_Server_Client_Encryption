@@ -1,12 +1,16 @@
 #pragma once
 #include <iostream>
 #include <exception>
-#include <winsock2.h>
 #include <ws2tcpip.h>
 #include <cstring>
 #include "json_utils.h"
 #include "structs.h"
+
+#include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib") // Link against the Winsock library
+
+#include "encrypting_util.h"
+
 
 namespace client
 {
@@ -132,18 +136,18 @@ namespace client
             config::set_client_id(payload.client_id);
 
             std::cout << config::client_id << std::endl;
+
             std::cout << sizeof(config::client_id) << std::endl;
             //client::request<client::request1026> request{};
             //request.payload.set_name(config::name);
 
-
+    
         }
         break;
         case response_code::register_fail:
         {
-            //retry counter
-            exit(1);
-            //response_payload<response2101> response{};
+            std::cerr << "user name: '" << config::name << "' already exist" << std::endl;
+            std::cerr << "end the program" << std::endl;
         }
         break;
         case response_code::public_key_received_sending_aes:

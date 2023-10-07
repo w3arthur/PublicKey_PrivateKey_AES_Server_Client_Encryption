@@ -18,6 +18,7 @@
 #include <cryptopp/osrng.h>
 #include <cryptopp/base64.h>
 
+
 namespace client
 {
 
@@ -97,37 +98,87 @@ namespace client
 
 
 
-    void generateOrLoadRSAKeys(std::string& rsaPrivateKey, std::string& rsaPublicKey, const std::string& clientName) {
-        // Check if private and public keys already exist and match the clientName
-        if (rsaPrivateKey.empty() || rsaPublicKey.empty()) {
+
+  
+    void generate_rsa_keys(std::vector<char>& rsa_private_key, std::vector<char>& rsa_public_key)
+    {
+        if (rsa_private_key.empty() || rsa_public_key.empty()) {
             CryptoPP::AutoSeededRandomPool rng;
-            CryptoPP::InvertibleRSAFunction params;
-            params.GenerateRandomWithKeySize(rng, 1024);
 
-            CryptoPP::RSA::PrivateKey privateKey(params);
-            CryptoPP::RSA::PublicKey publicKey(params);
+            // Generate or load private key
+            CryptoPP::RSA::PrivateKey privateKey;
+            if (rsa_private_key.empty()) {
+                CryptoPP::InvertibleRSAFunction params;
+                params.GenerateRandomWithKeySize(rng, config::security_asymmetric_key_size); // Set key size to 1024 bits
+                privateKey = CryptoPP::RSA::PrivateKey(params);
+                privateKey.Validate(rng, 3);
 
-            // Save the private key to the string
-            CryptoPP::StringSink privateKeySink(rsaPrivateKey);
-            privateKey.Save(privateKeySink);
+                // Save the private key to a vector
+                CryptoPP::ByteQueue privateKeyQueue;
+                privateKey.Save(privateKeyQueue);
 
-            // Save the public key to the string
-            CryptoPP::StringSink publicKeySink(rsaPublicKey);
-            publicKey.Save(publicKeySink);
+                size_t privateKeySize = privateKeyQueue.MaxRetrievable();
+                rsa_private_key.resize(privateKeySize);
+                privateKeyQueue.Get(reinterpret_cast<byte*>(rsa_private_key.data()), privateKeySize);
+            }
+            else {
+                // Decode the loaded private key
+                CryptoPP::ByteQueue privateKeyQueue;
+                privateKeyQueue.Put(reinterpret_cast<const byte*>(rsa_private_key.data()), rsa_private_key.size());
+                privateKey.Load(privateKeyQueue);
+            }
 
-            // Save the keys to files
-            //saveRSAKeysToFile(privateKey, "private_key.pem");
-            //saveRSAKeysToFile(publicKey, "public_key.pem");
+            // Generate or load public key
+            CryptoPP::RSA::PublicKey publicKey;
+            if (rsa_public_key.empty()) {
+                publicKey = CryptoPP::RSA::PublicKey(privateKey);
+                publicKey.Validate(rng, 3);
+
+                // Save the public key to a vector
+                CryptoPP::ByteQueue publicKeyQueue;
+                publicKey.Save(publicKeyQueue);
+
+                size_t publicKeySize = publicKeyQueue.MaxRetrievable();
+                rsa_public_key.resize(publicKeySize);
+                publicKeyQueue.Get(reinterpret_cast<byte*>(rsa_public_key.data()), publicKeySize);
+            }
+            else {
+                // Decode the loaded public key
+                CryptoPP::ByteQueue publicKeyQueue;
+                publicKeyQueue.Put(reinterpret_cast<const byte*>(rsa_public_key.data()), rsa_public_key.size());
+                publicKey.Load(publicKeyQueue);
+            }
         }
-        else
-        {
+        else {
             // Keys exist, no need to generate new ones
             std::cout << "RSA keys already exist." << std::endl;
         }
     }
 
 
+    void encrypt_aes_cbc(const std::vector<char>& plaintextVector, std::vector<char>& ciphertextVector) {
+        CryptoPP::AutoSeededRandomPool rng;
+        CryptoPP::SecByteBlock key(CryptoPP::AES::DEFAULT_KEYLENGTH);
+        rng.GenerateBlock(key, key.size());
+
+        byte iv[CryptoPP::AES::BLOCKSIZE] = { 0 };
+
+        std::string plaintext(plaintextVector.begin(), plaintextVector.end());
+        std::string ciphertext;
+
+        CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
+        encryptor.SetKeyWithIV(key, key.size(), iv);
+
+        CryptoPP::StringSource(plaintext, true, new CryptoPP::StreamTransformationFilter(encryptor, new CryptoPP::StringSink(ciphertext)));
+
+        ciphertextVector.assign(ciphertext.begin(), ciphertext.end());
+    }
 
 
+
+
+
+
+    //TODO: complete with symetric encryption
 
 }

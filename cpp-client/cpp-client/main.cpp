@@ -19,7 +19,7 @@ int main()
     client::transfer transfer = client::get_transfer();
     client::identyfier identyfier = client::get_identyfier();
     client::config::name = !identyfier.is_available ? transfer.name : transfer.name;
-
+    /*
     client::request<client::request1025> request{};
     request.payload.set_name(client::config::name);
 
@@ -36,9 +36,16 @@ int main()
         std::cout << "Received: " << "ok" << std::endl;
         handel_response(register_request);
     }
+    */
 
 
+    std::vector<char> private_key{};
+    std::vector<char> public_key{};
 
+    client::generate_rsa_keys(private_key, public_key);
+
+    std::cout << public_key.data() << std::endl;
+    std::cout << public_key.size() << std::endl;
 
 #if defined(_DEBUG)
     std::cout << "\n\nDebugging mode\nPress [Enter] to run main() again\n";
