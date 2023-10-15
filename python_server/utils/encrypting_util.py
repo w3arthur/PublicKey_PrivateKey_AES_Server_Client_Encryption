@@ -4,8 +4,28 @@ if __name__ != "__main__":
     import threading
     from Crypto.Cipher import AES
     import hashlib
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import padding, rsa
+    from cryptography.hazmat.primitives import hashes
+
+    def generate_and_encrypt_aes_key(public_key_bytes):
+        public_key = serialization.load_der_public_key(public_key_bytes)
+        aes_key = Fernet.generate_key()
+        # Encrypt the AES key with the recipient's public key
+        encrypted_aes_key = public_key.encrypt(
+            aes_key,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        return encrypted_aes_key, aes_key
 
     # פונקציה להצפנת נתונים בAES
+
     def encrypt(data, key):
         cipher = AES.new(key, AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(data)

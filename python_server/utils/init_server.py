@@ -7,6 +7,7 @@ if __name__ != "__main__":
     import config
     from utils.classes import Header, Payload
     from utils.sql_lite_util import check_client, register_client
+    from utils.encrypting_util import generate_and_encrypt_aes_key
 
     # Define the updated header structure
     HEADER_SIZE = struct.calcsize(config.received_request_header_format)
@@ -63,22 +64,20 @@ if __name__ != "__main__":
             return string[:name_end_index]
         return string
 
-    def get_string_from_255char(payload_data: str) -> str:
-        request_format: str = "<255s"
+    def get_string(payload_data, request_format: str = "<255s") -> str:
         str1,  = struct.unpack(request_format, payload_data)
         return null_terminator_crop(str1).decode('utf-8')
 
     def handle_code_1025(client_socket: object, payload_data: str):
-        name: str = get_string_from_255char(payload_data)
+        name: str = get_string(payload_data, "<255s")
+        # if (check_client(name)):  # is a client
+        #     code: int = 2101
+        #     header = Header(code, 0)
+        #     header_bytes = header.serialize()
+        #     message = header_bytes
+        #     client_socket.send(message)
+        #     return
         code: int = 2100
-        if (check_client(name)):  # is a client
-            code = 2101
-            header = Header(code, 0)
-            header_bytes = header.serialize()
-            message = header_bytes
-            client_socket.send(message)
-            return
-
         client_id: str = register_client(name)
         header = Header(code, len(client_id))
         payload = Payload(client_id)
@@ -89,7 +88,11 @@ if __name__ != "__main__":
 
     def handle_code_1026(client_socket: object, payload_data: str):
         request1026_format: str = "<255s160s"
-        name, public_key = struct.unpack(request1026_format, payload_data)
+        _name, public_key_bytes = struct.unpack(
+            request1026_format, payload_data)
+        name: str = get_string(_name, "255s")
+        encrypted_aes_key, aes_key = generate_and_encrypt_aes_key(
+            public_key_bytes)
         pass
 
     def handle_code_1027(client_socket: object, payload_data: str):

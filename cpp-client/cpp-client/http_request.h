@@ -123,83 +123,70 @@ namespace client
 
 
 
-    void handel_response(response& response)
+    void handel_response(response&& response)
     {
         switch (response.get_response_code())
         {
-        case response_code::register_success:
-        {
-            response_payload<response2100> payload(response);
-            std::memcpy(&payload, response.payload.data(), response.header.payload_size);
-            payload.client_id[sizeof(payload) - 1] = '\0';
+            case response_code::register_success:
+            {
+                response_payload<response2100> payload(response);
+                std::memcpy(&payload, response.payload.data(), response.header.payload_size);
+                payload.client_id[sizeof(payload) - 1] = '\0';
 
-            config::set_client_id(payload.client_id);
-
-            std::cout << config::client_id << std::endl;
-
-            std::cout << sizeof(config::client_id) << std::endl;
-            //client::request<client::request1026> request{};
-            //request.payload.set_name(config::name);
-
-    
-        }
-        break;
-        case response_code::register_fail:
-        {
-            std::cerr << "user name: '" << config::name << "' already exist" << std::endl;
-            std::cerr << "end the program" << std::endl;
-        }
-        break;
-        case response_code::public_key_received_sending_aes:
-        {
-            response_payload<response2102> response{};
-        }
-        break;
-        case response_code::file_received_successfully_with_crc:
-        {
-            response_payload<response2103> response{};
-        }
-        break;
-        case response_code::approval_message_receiving:
-        {
-            response_payload<response2104> response{};
-        }
-        break;
-        case response_code::approval_reconnection_request_send_crypted_aes:
-        {
-            response_payload<response2105> response{};
-        }
-        break;
-        case response_code::denined_reconnection_request_client_should_register_again:
-        {
-            response_payload<response2106> response{};
-        }
-        break;
-        case response_code::global_server_error:
-        {
-            response_payload<response2107> response{};
-        }
-        break;
-        }
+                config::set_client_id(payload.client_id);
 
 
-
+                client::request<client::request1026> request_send_public_key{};
+                std::vector<unsigned char> public_key{};
+                client::generate_rsa_keys(config::private_key, public_key);
+                request_send_public_key.payload.set_name(config::name);
+                request_send_public_key.payload.set_public_key(public_key.data());
+                handel_response(send_request(config::transfer.ip_address, config::transfer.port, request_send_public_key));
+            }
+            break;
+            case response_code::register_fail:
+            {
+                std::cerr << "user name: '" << config::name << "' already exist" << std::endl;
+                std::cerr << "end the program" << std::endl;
+            }
+            break;
+            case response_code::public_key_received_sending_aes:
+            {
+                response_payload<response2102> response{};
+            }
+            break;
+            case response_code::file_received_successfully_with_crc:
+            {
+                response_payload<response2103> response{};
+            }
+            break;
+            case response_code::approval_message_receiving:
+            {
+                response_payload<response2104> response{};
+            }
+            break;
+            case response_code::approval_reconnection_request_send_crypted_aes:
+            {
+                response_payload<response2105> response{};
+            }
+            break;
+            case response_code::denined_reconnection_request_client_should_register_again:
+            {
+                response_payload<response2106> response{};
+            }
+            break;
+            case response_code::global_server_error:
+            {
+                response_payload<response2107> response{};
+            }
+            break;
+            default:// response_code::response_error:
+            {
+                std::cerr << "Message sending failed or no response received." << std::endl;
+            }
+            break;
+        }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -249,11 +236,10 @@ namespace client
 
 
 
-
-
-
-
-
-
-
 }
+
+
+
+
+
+

@@ -5,12 +5,11 @@
 #include <sstream>
 #include <exception>
 #include "config.h"
-#include "structs.h"
 
 namespace client
 {
 
-    transfer get_transfer()
+    _transfer get_transfer()
     {
         std::ifstream inputFile(config::transfer_info_file_name);
         if (!inputFile.is_open())
@@ -19,7 +18,7 @@ namespace client
             throw std::exception();
         }
 
-        transfer transfer;
+        _transfer transfer;
         std::string line;
         std::getline(inputFile, line);
         {
@@ -37,7 +36,7 @@ namespace client
     }
 
 
-    identyfier get_identyfier()
+    _identyfier get_identyfier()
     {
         std::ifstream inputFile(config::me_info_file_name);
         if (!inputFile.good())
@@ -54,7 +53,7 @@ namespace client
             return {};  //identyfier.is_available = false;
         }
 
-        identyfier identyfier;
+        _identyfier identyfier;
         try
         {
             std::getline(inputFile, identyfier.name);
@@ -73,7 +72,7 @@ namespace client
     }
 
 
-    void set_identyfier(const identyfier& identyfieri)
+    void set_identyfier(const _identyfier& identyfieri)
     {
         std::ofstream rsaKeyFile("info.me");
         rsaKeyFile << identyfieri.name << std::endl;

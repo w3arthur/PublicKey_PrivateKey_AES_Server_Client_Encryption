@@ -100,7 +100,7 @@ namespace client
 
 
   
-    void generate_rsa_keys(std::vector<char>& rsa_private_key, std::vector<char>& rsa_public_key)
+    void generate_rsa_keys(std::vector<unsigned char>& rsa_private_key, std::vector<unsigned char>& rsa_public_key)
     {
         if (rsa_private_key.empty() || rsa_public_key.empty()) {
             CryptoPP::AutoSeededRandomPool rng;
@@ -108,6 +108,7 @@ namespace client
             // Generate or load private key
             CryptoPP::RSA::PrivateKey privateKey;
             if (rsa_private_key.empty()) {
+                rsa_private_key.reserve(config::security_asymmetric_key_size);
                 CryptoPP::InvertibleRSAFunction params;
                 params.GenerateRandomWithKeySize(rng, config::security_asymmetric_key_size); // Set key size to 1024 bits
                 privateKey = CryptoPP::RSA::PrivateKey(params);
@@ -119,12 +120,12 @@ namespace client
 
                 size_t privateKeySize = privateKeyQueue.MaxRetrievable();
                 rsa_private_key.resize(privateKeySize);
-                privateKeyQueue.Get(reinterpret_cast<byte*>(rsa_private_key.data()), privateKeySize);
+                privateKeyQueue.Get(rsa_private_key.data(), privateKeySize);
             }
             else {
                 // Decode the loaded private key
                 CryptoPP::ByteQueue privateKeyQueue;
-                privateKeyQueue.Put(reinterpret_cast<const byte*>(rsa_private_key.data()), rsa_private_key.size());
+                privateKeyQueue.Put(rsa_private_key.data(), rsa_private_key.size());
                 privateKey.Load(privateKeyQueue);
             }
 
@@ -140,12 +141,12 @@ namespace client
 
                 size_t publicKeySize = publicKeyQueue.MaxRetrievable();
                 rsa_public_key.resize(publicKeySize);
-                publicKeyQueue.Get(reinterpret_cast<byte*>(rsa_public_key.data()), publicKeySize);
+                publicKeyQueue.Get(rsa_public_key.data(), publicKeySize);
             }
             else {
                 // Decode the loaded public key
                 CryptoPP::ByteQueue publicKeyQueue;
-                publicKeyQueue.Put(reinterpret_cast<const byte*>(rsa_public_key.data()), rsa_public_key.size());
+                publicKeyQueue.Put(rsa_public_key.data(), rsa_public_key.size());
                 publicKey.Load(publicKeyQueue);
             }
         }

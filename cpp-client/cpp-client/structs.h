@@ -6,32 +6,12 @@
 #include <variant>
 #include <typeindex>
 #include <winsock2.h> // TODO: remove it from here
-
 #include <cstring>
+#include "config.h"
+
 
 namespace client
 {
-	//TODO: set sizes
-	struct transfer
-	{
-		//bool is_available;
-		std::string ip_address{};
-		unsigned short int port{};
-		std::string name{};
-		std::string file_address{};
-	};
-
-	struct identyfier
-	{
-		bool is_available{};
-		std::string name{};
-		std::string id{};	//unique//ascii hex
-		std::string private_key{};
-	};
-
-
-
-
 
 	// Request			all request codes
 	//Request structs
@@ -66,13 +46,13 @@ namespace client
 	};
 	struct request1026 : request1025
 	{
-		void set_public_key(const char* _public_key)
+		void set_public_key(const  unsigned char* _public_key)
 		{
-			strncpy_s(this->public_key, _public_key, sizeof(this->public_key));
+			memcpy_s(this->public_key, sizeof(this->public_key), _public_key, sizeof(this->public_key));
 			//this->name[name.size()] = '\0';
 		}
 		//char name[255]{};
-		char public_key[160]{};
+		unsigned char public_key[160]{};
 	};
 	struct request1027 : request1025
 	{
