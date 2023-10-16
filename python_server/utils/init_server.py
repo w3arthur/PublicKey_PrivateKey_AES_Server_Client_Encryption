@@ -5,7 +5,7 @@ if __name__ != "__main__":
     import os
 
     import config
-    from utils.classes import Header, Payload
+    from utils.classes import Header, Payload2100, Payload2102
     from utils.sql_lite_util import check_client, register_client
     from utils.encrypting_util import generate_and_encrypt_aes_key
 
@@ -54,7 +54,7 @@ if __name__ != "__main__":
             }
 
             if code in code_handlers:
-                code_handlers[code](client_socket, payload_data)
+                code_handlers[code](client_socket, payload_data, client_id='')
 
         # print(f"Received: {request}")
 
@@ -68,7 +68,7 @@ if __name__ != "__main__":
         str1,  = struct.unpack(request_format, payload_data)
         return null_terminator_crop(str1).decode('utf-8')
 
-    def handle_code_1025(client_socket: object, payload_data: str):
+    def handle_code_1025(client_socket: object, payload_data: str, client_id):
         name: str = get_string(payload_data, "<255s")
         # if (check_client(name)):  # is a client
         #     code: int = 2101
@@ -79,44 +79,44 @@ if __name__ != "__main__":
         #     return
         code: int = 2100
         client_id: str = register_client(name)
-        header = Header(code, len(client_id))
-        payload = Payload(client_id)
+        payload = Payload2100(client_id)
+        header = Header(code, payload.size())
+
         header_bytes = header.serialize()
         payload_bytes = payload.serialize()
         message = header_bytes + payload_bytes
         client_socket.send(message)
 
-    def handle_code_1026(client_socket: object, payload_data: str):
+    def handle_code_1026(client_socket: object, payload_data: str, client_id):
         request1026_format: str = "<255s160s"
         _name, public_key_bytes = struct.unpack(
             request1026_format, payload_data)
+
         name: str = get_string(_name, "255s")
         encrypted_aes_key, aes_key = generate_and_encrypt_aes_key(
             public_key_bytes)
+        public_key = public_key_bytes.hex()
+        code: int = 2102
+        payload = Payload2102(client_id, encrypted_aes_key)
+        header = Header(code, payload.size())
+        header_bytes = header.serialize()
+        payload_bytes = payload.serialize()
+        message = header_bytes + payload_bytes
+        client_socket.send(message)
+
+    def handle_code_1027(client_socket: object, payload_data: str, client_id):
         pass
 
-    def handle_code_1027(client_socket: object, payload_data: str):
-        pass
-
-    def handle_code_1028(client_socket: object, payload_data: str):
+    def handle_code_1028(client_socket: object, payload_data: str, client_id):
         request1028_format_package_size = "<I"
         pass
 
-    def handle_code_1029(client_socket: object, payload_data: str):
+    def handle_code_1029(client_socket: object, payload_data: str, client_id):
 
         pass
 
-    def handle_code_1030(client_socket: object, payload_data: str):
+    def handle_code_1030(client_socket: object, payload_data: str, client_id):
         pass
 
-    def handle_code_1031(client_socket: object, payload_data: str):
-        pass
-
-    def handle_registration(client_socket):
-        pass
-
-    def handle_send_public_key(client_socket):
-        pass
-
-    def handle_send_encrypted_file(client_socket):
+    def handle_code_1031(client_socket: object, payload_data: str, client_id):
         pass

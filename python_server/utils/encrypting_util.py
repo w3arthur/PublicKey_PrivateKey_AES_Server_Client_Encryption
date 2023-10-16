@@ -1,5 +1,6 @@
 if __name__ != "__main__":
     # Please fix
+    import base64
     import socket
     import threading
     from Crypto.Cipher import AES
@@ -22,7 +23,7 @@ if __name__ != "__main__":
             )
         )
 
-        return encrypted_aes_key, aes_key
+        return base64.b64encode(encrypted_aes_key).decode('utf-8'), base64.urlsafe_b64encode(aes_key).decode('utf-8')
 
     # פונקציה להצפנת נתונים בAES
 
