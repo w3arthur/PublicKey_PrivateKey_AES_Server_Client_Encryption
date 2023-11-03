@@ -42,23 +42,69 @@ namespace client
         return fileData;
     }
 
-    std::vector<char> encrypt_with_aes(const std::vector<char>& data, const std::string& aesKey) {
-        CryptoPP::AutoSeededRandomPool prng;
-        byte iv[CryptoPP::AES::BLOCKSIZE];
-        prng.GenerateBlock(iv, sizeof(iv));
 
-        CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
-        CryptoPP::SecByteBlock keyBlock(reinterpret_cast<const byte*>(aesKey.data()), aesKey.size());
-        encryptor.SetKeyWithIV(keyBlock, keyBlock.size(), iv);
 
-        std::string encryptedData;
-        CryptoPP::ArraySource(reinterpret_cast<const byte*>(data.data()), data.size(), true,
-            new CryptoPP::StreamTransformationFilter(encryptor, new CryptoPP::StringSink(encryptedData))
-        );
 
-        return std::vector<char>(encryptedData.begin(), encryptedData.end());
+    CryptoPP::SecByteBlock vectorToSecBlock(const std::vector<unsigned char>& vec) {
+        CryptoPP::SecByteBlock secBlock(vec.data(), vec.size());
+        return secBlock;
     }
 
+
+    std::vector<unsigned char> encrypt_with_aes(const std::vector<char>& plaintext, const std::vector<unsigned char>& aesKey)
+    {
+        // Calculate the hash of the dynamic key to get a fixed-size key (e.g., 192 bits)
+        CryptoPP::SHA256 hash;
+        std::vector<unsigned char> hashResult(32);  // 32 bytes for the SHA-256 hash
+        hash.CalculateDigest(hashResult.data(), reinterpret_cast<const CryptoPP::byte*>(aesKey.data()), aesKey.size());
+
+        // Truncate the hash to 192 bits (24 bytes)
+        std::vector<unsigned char> fixedSizeKey(24);
+        std::copy(hashResult.begin(), hashResult.begin() + 24, fixedSizeKey.begin());
+
+        CryptoPP::SecByteBlock keyBlock = vectorToSecBlock(fixedSizeKey);
+
+        CryptoPP::AES::Encryption aesEncryption(keyBlock, keyBlock.size());
+        CryptoPP::ECB_Mode_ExternalCipher::Encryption ecbEncryption(aesEncryption);
+
+        std::string ciphertextString;
+
+        CryptoPP::StreamTransformationFilter stfEncryptor(ecbEncryption, new CryptoPP::StringSink(ciphertextString));
+        stfEncryptor.Put(reinterpret_cast<const CryptoPP::byte*>(plaintext.data()), plaintext.size());
+        stfEncryptor.MessageEnd();
+
+        std::vector<unsigned char> ciphertext(ciphertextString.begin(), ciphertextString.end());
+
+        return ciphertext;
+    }
+
+
+    //testing purposes, decryption function
+    std::vector<char> dencrypt_with_aes(const std::vector<unsigned char>& ciphertext, const std::vector<unsigned char>& aesKey) {
+        // Calculate the hash of the dynamic key to get a fixed-size key (e.g., 192 bits)
+        CryptoPP::SHA256 hash;
+        std::vector<unsigned char> hashResult(32);  // 32 bytes for the SHA-256 hash
+        hash.CalculateDigest(hashResult.data(), reinterpret_cast<const CryptoPP::byte*>(aesKey.data()), aesKey.size());
+
+        // Truncate the hash to 192 bits (24 bytes)
+        std::vector<unsigned char> fixedSizeKey(24);
+        std::copy(hashResult.begin(), hashResult.begin() + 24, fixedSizeKey.begin());
+
+        CryptoPP::SecByteBlock keyBlock = vectorToSecBlock(fixedSizeKey);
+
+        CryptoPP::AES::Decryption aesDecryption(keyBlock, keyBlock.size());
+        CryptoPP::ECB_Mode_ExternalCipher::Decryption ecbDecryption(aesDecryption);
+
+        std::string decryptedString;
+
+        CryptoPP::StreamTransformationFilter stfDecryptor(ecbDecryption, new CryptoPP::StringSink(decryptedString));
+        stfDecryptor.Put(reinterpret_cast<const CryptoPP::byte*>(ciphertext.data()), ciphertext.size());
+        stfDecryptor.MessageEnd();
+
+        std::vector<char> decryptedData(decryptedString.begin(), decryptedString.end());
+
+        return decryptedData;
+    }
 
     std::string calculate_crc32(const std::vector<char>& data) {
         std::string result;
@@ -70,85 +116,7 @@ namespace client
         return result;
     }
 
-    std::pair<std::vector<char>, std::vector<uint8_t>> encryptFileWithAES(const std::string& key, const std::string& filePath) {
-        CryptoPP::AutoSeededRandomPool prng;
 
-        // Generate a random IV
-        byte iv[CryptoPP::AES::BLOCKSIZE];
-        prng.GenerateBlock(iv, sizeof(iv));
-
-        // Read the file content
-        std::ifstream inputFile(filePath, std::ios::binary);
-        if (!inputFile.is_open()) {
-            std::cerr << "Failed to open the input file." << std::endl;
-            return std::make_pair(std::vector<char>(), std::vector<uint8_t>());
-        }
-
-        inputFile.seekg(0, std::ios::end);
-        size_t fileSize = inputFile.tellg();
-        inputFile.seekg(0, std::ios::beg);
-
-        std::vector<char> fileContent(fileSize);
-        inputFile.read(fileContent.data(), fileSize);
-        inputFile.close();
-
-        // Set up AES encryption
-        CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
-        CryptoPP::SecByteBlock keyBlock(reinterpret_cast<const byte*>(key.data()), key.size());
-        encryptor.SetKeyWithIV(keyBlock, keyBlock.size(), iv);
-
-        // Encrypt the file content
-        std::string encryptedData;
-        CryptoPP::ArraySource(reinterpret_cast<const byte*>(fileContent.data()), fileSize, true,
-            new CryptoPP::StreamTransformationFilter(encryptor, new CryptoPP::StringSink(encryptedData))
-        );
-
-        // Calculate the CRC32 checksum of the original file content as a byte array
-        CryptoPP::CRC32 crc;
-        crc.Update(reinterpret_cast<const byte*>(fileContent.data()), fileSize);
-        std::vector<uint8_t> checksumValue;
-        checksumValue.resize(CryptoPP::CRC32::DIGESTSIZE);
-        //crc.GetCrc32(checksumValue.data());
-
-        return std::make_pair(std::vector<char>(encryptedData.begin(), encryptedData.end()), checksumValue);
-    }
-    // Function for AES encryption
-
-    std::string encrypt_aes(const std::string& plaintext, const CryptoPP::SecByteBlock& key, const CryptoPP::SecByteBlock& iv)
-    {
-        try
-        {
-            std::string ciphertext;
-            CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
-            encryptor.SetKeyWithIV(key, key.size(), iv);
-
-            CryptoPP::StringSource(plaintext, true,
-                new CryptoPP::StreamTransformationFilter(encryptor,
-                    new CryptoPP::StringSink(ciphertext)
-                )
-            );
-            return ciphertext;
-            //CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryption(key, key.size(), iv);
-            //CryptoPP::StringSource(plaintext, true, new CryptoPP::StreamTransformationFilter(encryption, new CryptoPP::StringSink(ciphertext)));
-        }
-        catch (const CryptoPP::Exception& ex)
-        {
-            std::cerr << "AES encryption error: " << ex.what() << std::endl;
-            return {};
-        }
-    }
-
-    void encrypt_string(const std::string& id, const std::string& fileContents)
-    {
-
-        CryptoPP::AutoSeededRandomPool prng;
-        //CryptoPP::SecByteBlock key(id.data(), id.size());
-        CryptoPP::SecByteBlock iv(CryptoPP::AES::BLOCKSIZE);
-        prng.GenerateBlock(iv, iv.size());
-
-        // std::string encryptedFile = encrypt_aes(fileContents, key, iv);
-         // if (!SendMessage(serverIPStr, serverPort, encryptedFile)) {
-    }
 
 
 

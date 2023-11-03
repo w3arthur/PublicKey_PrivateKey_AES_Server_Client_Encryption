@@ -71,16 +71,13 @@ namespace client
                 std::memcpy(&payload.client_id, response.payload.data(), 16);
 
                 
-                std::vector<char> aes_key = std::vector<char>(response.payload.begin() + 16, response.payload.end());
-
-                //std::memcpy(&payload.aes_key, place, response.payload.size() - 16);
+                //response.payload.aes_key = std::vector<unsigned char>(response.payload.begin() + 16, response.payload.end());
 
 
-
-                //std::copy(response.payload.begin() + 16, response.payload.end() - 1, payload.aes_key.begin());
-                //std::string aes(response.payload.begin() + 16, response.payload.end());
-                //std::vector<char> file_data =  read_data_from_file("file.txt");
-                //std::vector<char> file_aes = encrypt_with_aes(file_data, payload.aes_key);
+                std::vector<unsigned char> aes(response.payload.begin() + 16, response.payload.end());
+                std::vector<char> file_data =  read_data_from_file("file.txt");
+                auto file_aes = encrypt_with_aes(file_data, aes);
+                auto dfile = dencrypt_with_aes(file_aes, aes);
                 //auto file_check_sum = calculate_crc32(file_data);
                // auto aaa = encryptFileWithAES(payload.aes_key, "file.txt");
 

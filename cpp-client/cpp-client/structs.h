@@ -224,7 +224,7 @@ namespace client
 	struct response2102 : response2100
 	{
 		//char client_id[16]{};
-		std::vector<char> aes_key;	//cant set it with #pragma pack(push, 1)
+		//std::vector<char> aes_key;	//cant set it with #pragma pack(push, 1)
 	};
 	struct response2103 : response2100
 	{
