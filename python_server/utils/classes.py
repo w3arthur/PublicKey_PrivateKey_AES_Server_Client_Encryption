@@ -1,6 +1,8 @@
 if __name__ != "__main__":
     import struct
-    import config
+    import config  # as config
+
+    # TODO: fix serialize function
 
     class Header:
         version: int = config.server_version

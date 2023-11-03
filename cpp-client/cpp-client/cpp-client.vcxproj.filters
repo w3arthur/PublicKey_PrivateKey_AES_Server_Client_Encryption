@@ -35,6 +35,9 @@
     <ClInclude Include="encrypting_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="http_request_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="transfer.info" />

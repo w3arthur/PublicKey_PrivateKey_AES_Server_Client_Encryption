@@ -1,11 +1,11 @@
 if __name__ != "__main__":
     import sqlite3
     import uuid
-    from config import database_name, clients_table_name, files_table_name
+    import config  # as config
 
     def check_client(client_name) -> bool:
         # Connect to the SQLite database
-        conn = sqlite3.connect(database_name)
+        conn = sqlite3.connect(config.database_file_name)
         cursor = conn.cursor()
 
         data = (client_name,)
@@ -18,7 +18,7 @@ if __name__ != "__main__":
 
     def register_client(client_name) -> bytes:
         # Connect to the SQLite database
-        conn = sqlite3.connect(database_name)
+        conn = sqlite3.connect(config.database_file_name)
         cursor = conn.cursor()
 
         # Insert data into the "client" table
@@ -27,7 +27,7 @@ if __name__ != "__main__":
         data_to_insert = (str(unique_id), client_name,)
 
         cursor.execute(
-            f"INSERT INTO {clients_table_name} (ID, Name) VALUES (?, ?)", data_to_insert)
+            f"INSERT INTO {config.clients_table_name} (ID, Name) VALUES (?, ?)", data_to_insert)
         last_row_id = cursor.lastrowid
 
         cursor.execute(
@@ -43,7 +43,7 @@ if __name__ != "__main__":
 
     def insert_client(client_name, public_key, last_seen, aes_key):
         # Connect to the SQLite database
-        conn = sqlite3.connect(database_name)
+        conn = sqlite3.connect(config.database_file_name)
         cursor = conn.cursor()
 
         # Insert data into the "client" table

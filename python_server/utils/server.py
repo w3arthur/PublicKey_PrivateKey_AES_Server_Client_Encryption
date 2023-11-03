@@ -2,12 +2,11 @@ if __name__ != "__main__":
     import socket
     import struct
     import hashlib
-    import os
 
-    import config
-    from utils.classes import Header, Payload2100, Payload2102
-    from utils.sql_lite_util import check_client, register_client
-    from utils.encrypting_util import generate_and_encrypt_aes_key
+    import config  # as config
+    import utils.classes as classes
+    import utils.sql_lite_util as sql_lite_util
+    import utils.encrypting_util as encrypting_util
 
     # Define the updated header structure
     HEADER_SIZE = struct.calcsize(config.received_request_header_format)
@@ -40,9 +39,6 @@ if __name__ != "__main__":
             print('code', code)
             print('payload_size', payload_size)
 
-            # Receive the payload data based on payload_size
-            payload_data = client_socket.recv(payload_size)
-
             code_handlers = {
                 1025: handle_code_1025,
                 1026: handle_code_1026,
@@ -55,7 +51,7 @@ if __name__ != "__main__":
 
             if code in code_handlers:
                 code_handlers[code](
-                    client_socket, payload_data, client_id)
+                    client_socket, payload_size, client_id)
 
         # print(f"Received: {request}")
 
@@ -69,8 +65,11 @@ if __name__ != "__main__":
         str1,  = struct.unpack(request_format, payload_data)
         return null_terminator_crop(str1).decode('utf-8')
 
-    def handle_code_1025(client_socket: object, payload_data: str, client_id):
+    def handle_code_1025(client_socket: object, payload_size,
+                         client_id):
         print('1025 Register request')
+        # Receive the payload data based on payload_size
+        payload_data = client_socket.recv(payload_size)
         name: str = get_string(payload_data, "<255s")
         # if (check_client(name)):  # is a client
         #     code: int = 2101
@@ -80,53 +79,70 @@ if __name__ != "__main__":
         #     client_socket.send(message)
         #     return
         code: int = 2100
-        client_id = register_client(name)
-        payload = Payload2100(client_id)
-        header = Header(code, payload.size())
+        client_id = sql_lite_util.register_client(name)
+        payload = classes.Payload2100(client_id)
+        header = classes.Header(code, payload.size())
 
         header_bytes = header.serialize()
         payload_bytes = payload.serialize()
         message = header_bytes + payload_bytes
         client_socket.send(message)
 
-    def handle_code_1026(client_socket: object, payload_data: str, client_id):
+    def handle_code_1026(client_socket: object, payload_size, client_id):
         print('1026 AESKey send')
+        # Receive the payload data based on payload_size
+        payload_data = client_socket.recv(payload_size)
         request1026_format: str = "<255s160s"
         _name, public_key_bytes = struct.unpack(
             request1026_format, payload_data)
 
         name: str = get_string(_name, "255s")
-        encrypted_aes_key, aes_key = generate_and_encrypt_aes_key(
+        encrypted_aes_key, aes_key = encrypting_util.generate_and_encrypt_aes_key(
             public_key_bytes)
         public_key = public_key_bytes.hex()  # continue
         code: int = 2102
-        payload = Payload2102(client_id, encrypted_aes_key)
-        header = Header(code, payload.size())
-        aa = payload.size()
+        payload = classes.Payload2102(client_id, encrypted_aes_key)
+        header = classes.Header(code, payload.size())
         header_bytes = header.serialize()
         payload_bytes = payload.serialize()
         message = header_bytes + payload_bytes
-        aaaa = len(header_bytes)
-        aaa = len(message)
         client_socket.send(message)
 
-    def handle_code_1027(client_socket: object, payload_data: str, client_id):
+    def handle_code_1027(client_socket: object, payload_size, client_id):
         print('1027 Try login again')
         pass
 
-    def handle_code_1028(client_socket: object, payload_data: str, client_id):
+    def handle_code_1028(client_socket: object, payload_size, client_id):
+        # Receive the payload data based on payload_size
         print('1028 Receive file and check sum')
         request1028_format_package_size = "<I"
+        uint32_t_size = struct.calcsize(request1028_format_package_size)
+        if uint32_t_size < payload_size:
+            pass  # TODO:
+        _package_size_value = client_socket.recv(uint32_t_size)
+
+        package_size_value, = struct.unpack(
+            request1028_format_package_size, _package_size_value)
+
+        request1028_format_package = f"<{str(int(package_size_value))}s"  # <
+        package_file_size = struct.calcsize(request1028_format_package)
+        _package_aes_file_value = client_socket.recv(package_file_size)
+        if package_file_size < payload_size - uint32_t_size:
+            pass  # TODO:
+
+        package_aes_file_value, = struct.unpack(
+            request1028_format_package, _package_aes_file_value)
+
         pass
 
-    def handle_code_1029(client_socket: object, payload_data: str, client_id):
+    def handle_code_1029(client_socket: object, payload_size, client_id):
         print('1029 Try send CRC again')
         pass
 
-    def handle_code_1030(client_socket: object, payload_data: str, client_id):
+    def handle_code_1030(client_socket: object, payload_size, client_id):
         print('1030 File accept, return Thanks.')
         pass
 
-    def handle_code_1031(client_socket: object, payload_data: str, client_id):
+    def handle_code_1031(client_socket: object, payload_size, client_id):
         print('1031 CRC wrong for 4th time.')
         pass

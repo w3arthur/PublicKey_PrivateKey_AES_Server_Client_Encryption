@@ -8,79 +8,82 @@
 
 namespace client
 {
-
-    _transfer get_transfer()
+    inline transfer get_transfer_read_form_file()
     {
-        std::ifstream inputFile(config::transfer_info_file_name);
-        if (!inputFile.is_open())
+        std::ifstream input_file(config::transfer_info_file_name);
+        if (!input_file.is_open())
         {
             std::cerr << "Failed to open the file: " << config::transfer_info_file_name << std::endl;
             throw std::exception();
         }
 
-        _transfer transfer;
+        transfer transfer;
         std::string line;
-        std::getline(inputFile, line);
+        std::getline(input_file, line);
         {
             std::istringstream ss(line);
             std::getline(ss, transfer.ip_address, ':');
             std::getline(ss, line);
             transfer.port = static_cast<unsigned short int>(std::stoul(line));
         }
-        std::getline(inputFile, transfer.name);
-        std::getline(inputFile, transfer.file_address);
+        std::getline(input_file, transfer.name);
+        std::getline(input_file, transfer.file_address);
 
-        inputFile.close();
+        input_file.close();
 
         return transfer;
     }
 
 
-    _identyfier get_identyfier()
+    inline identifier get_identifier_read_form_file()
     {
-        std::ifstream inputFile(config::me_info_file_name);
-        if (!inputFile.good())
+        std::ifstream input_file(config::me_info_file_name);
+        // check if file exist
+        if (!input_file.good())
         {
             std::ofstream fileCreate(config::me_info_file_name);
             if (fileCreate.is_open())
             {
                 fileCreate.close();
             }
-            return {}; //identyfier.is_available = false;
+            return {};
         }
-        if (!inputFile.is_open())
+        if (!input_file.is_open())
         {
-            return {};  //identyfier.is_available = false;
+            return {};
         }
 
-        _identyfier identyfier;
+        identifier identifier;
         try
         {
-            std::getline(inputFile, identyfier.name);
-            std::getline(inputFile, identyfier.id);
-            std::getline(inputFile, identyfier.private_key);
-            identyfier.is_available = true;
+            std::getline(input_file, identifier.name);
+            std::getline(input_file, identifier.id);
+            std::getline(input_file, identifier.private_key);
+            identifier.is_available = true;
         }
-        catch (std::exception)
+        catch (const std::exception& ex)
         {
-            //identyfier.is_available = false;
+            std::cerr << "file '" << config::me_info_file_name << "' reading error.\n" << ex.what() << "\n";
         }
 
-        inputFile.close();
+        input_file.close();
 
-        return identyfier;
+        return identifier;
     }
 
 
-    void set_identyfier(const _identyfier& identyfieri)
+    inline void set_identifier_write_to_file(const identifier& identifier)
     {
-        std::ofstream rsaKeyFile("info.me");
-        rsaKeyFile << identyfieri.name << std::endl;
-        rsaKeyFile << identyfieri.private_key << std::endl;
-        rsaKeyFile << identyfieri.id << std::endl;
-        rsaKeyFile.close();
+        std::ofstream me_info_file(config::me_info_file_name);
+        me_info_file << identifier.name << std::endl;
+        me_info_file << identifier.private_key << std::endl;
+        me_info_file << identifier.id << std::endl;
+        me_info_file.close();
     }
 
+
+
+    /*
     std::string get_file_content(const std::string& file_path)
     {
 
@@ -94,7 +97,7 @@ namespace client
         fileStream.close();
         return fileContents;
     }
-
+    */
 
 
 

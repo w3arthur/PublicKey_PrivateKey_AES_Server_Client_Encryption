@@ -1,5 +1,5 @@
 if __name__ != "__main__":
-    # Please fix
+    # TODO: clear comment
     import base64
     import socket
     import threading
@@ -9,6 +9,18 @@ if __name__ != "__main__":
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import padding, rsa
     from cryptography.hazmat.primitives import hashes
+
+    def decrypt_with_aes_ecb(ciphertext, aes_key):
+        # Create an AES cipher object in ECB mode with the provided key
+        cipher = AES.new(aes_key, AES.MODE_ECB)
+
+        # Decrypt the ciphertext
+        decrypted_data = cipher.decrypt(ciphertext)
+
+        # Remove any padding (if used during encryption)
+        return decrypted_data.rstrip(b"\0")
+
+    # TODO: delete:
 
     def generate_and_encrypt_aes_key(public_key_bytes):
         public_key = serialization.load_der_public_key(public_key_bytes)
@@ -44,8 +56,3 @@ if __name__ != "__main__":
         response = "תשובת השרת"
         client_socket.send(response.encode())
         client_socket.close()
-
-
-else:
-    from ..main import main
-    main()

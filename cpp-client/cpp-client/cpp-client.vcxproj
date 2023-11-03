@@ -172,6 +172,7 @@ xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     <ClInclude Include="encrypting_util.h" />
     <ClInclude Include="files_util.h" />
     <ClInclude Include="http_request.h" />
+    <ClInclude Include="http_request_util.h" />
     <ClInclude Include="structs.h" />
   </ItemGroup>
   <ItemGroup>

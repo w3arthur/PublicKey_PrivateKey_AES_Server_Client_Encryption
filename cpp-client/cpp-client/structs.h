@@ -66,7 +66,7 @@ namespace client
 			message_content.reserve(_content_size);
 		}
 		uint32_t content_size{};
-		std::vector<char> message_content{};
+		std::vector<unsigned char> message_content{};
 	};
 	struct request1029 
 	{
