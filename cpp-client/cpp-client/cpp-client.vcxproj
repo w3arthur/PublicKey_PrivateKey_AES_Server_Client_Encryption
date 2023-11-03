@@ -178,6 +178,9 @@ xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     <None Include="me.info" />
     <None Include="transfer.info" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="file.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

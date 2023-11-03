@@ -10,15 +10,133 @@
 #pragma comment(lib, "ws2_32.lib") // Link against the Winsock library
 
 #include "encrypting_util.h"
+#include <algorithm>
+
+
+
+std::vector<char> createSubVector(const std::vector<char>& dataVector, size_t start, size_t end) {
+    // Check if the start and end indices are valid
+    if (start >= dataVector.size() || start >= end) {
+        return std::vector<char>(); // Return an empty vector for invalid indices
+    }
+
+    end = min(end, dataVector.size()); // Ensure end is within bounds
+
+    // Create a new std::vector<char> from the specified range
+    std::vector<char> result(dataVector.begin() + start, dataVector.begin() + end);
+
+    return result;
+}
+
 
 
 namespace client
 {
 
+    template <class Request_Class>
+    response send_request(const std::string& serverIP, unsigned short int serverPort, request<Request_Class>& request);
+
+
+    void handel_response(response& response)
+    {
+        switch (response.get_response_code())
+        {
+            case response_code::register_success:   //response2100
+            {
+                std::cout << "2100 Registered successfully\n";
+                response_payload<response2100> payload;
+                std::memcpy(&payload.client_id, response.payload.data(), response.header.payload_size);   //16
+                
+
+                config::set_client_id(payload.client_id, sizeof(payload.client_id));
+
+                request<request1026> request_send_public_key{};
+                std::vector<unsigned char> public_key{};
+                client::generate_rsa_keys(config::private_key, public_key);
+                request_send_public_key.payload.set_name(config::name);
+                request_send_public_key.payload.set_public_key(public_key.data());
+                client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_send_public_key);
+                handel_response(res);
+            }
+            break;
+            case response_code::register_fail:  //response2101
+            {
+                std::cerr << "user name: '" << config::name << "' already exist\n End the program.\n";
+            }
+            break;
+            case response_code::public_key_received_sending_aes:  //response2102
+            {
+                std::cout << "2102 Accepted, Public key received, sending encrypted AES\n";
+                response_payload<response2102> payload;
+                std::memcpy(&payload.client_id, response.payload.data(), 16);
+
+                
+                std::vector<char> aes_key = std::vector<char>(response.payload.begin() + 16, response.payload.end());
+
+                //std::memcpy(&payload.aes_key, place, response.payload.size() - 16);
+
+
+
+                //std::copy(response.payload.begin() + 16, response.payload.end() - 1, payload.aes_key.begin());
+                //std::string aes(response.payload.begin() + 16, response.payload.end());
+                //std::vector<char> file_data =  read_data_from_file("file.txt");
+                //std::vector<char> file_aes = encrypt_with_aes(file_data, payload.aes_key);
+                //auto file_check_sum = calculate_crc32(file_data);
+               // auto aaa = encryptFileWithAES(payload.aes_key, "file.txt");
+
+                request<request1028> request_send_a_file{};
+                //request_send_a_file.payload.set_content_size(aaa.first);
+                //request_send_a_file.payload.
+                //client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_send_public_key);
+                //handel_response(res);
+                //payload.aes_key.resize(response.header.payload_size);
+                //std::memcpy(&payload.aes_key, response.payload.data() + 16, response.header.payload_size);
+                //payload.aes_key = a;
+
+
+            }
+            break;
+            case response_code::file_received_successfully_with_crc:
+            {
+                std::cout << "2103 Accepted receiving File with CRC\n";
+                response_payload<response2103> response{};
+            }
+            break;
+            case response_code::approval_message_receiving:
+            {   //response to 1029 / 1031
+                std::cout << "2104 Accepted receiving Thanks message\n";
+                response_payload<response2104> response{};
+            }
+            break;
+            case response_code::approval_reconnection_request_send_crypted_aes:
+            {
+                std::cout << "2105 Accept recconection attempt, send encrypted AES again\n";
+                response_payload<response2105> response{};
+            }
+            break;
+            case response_code::denined_reconnection_request_client_should_register_again: // 106
+            {
+                std::cerr << "2106 all requests to loging failed, \n"
+                    "The client is not registerd or there is an issue with public key, \n"
+                    "The client have to reregister.\n";
+                response_payload<response2106> response{};
+            }
+            break;
+            case response_code::global_server_error:    // 2107
+                //response_payload<response2107> response{};
+            //break; // fall through
+            default:
+            {
+                std::cerr << "2107 Global error that can't handle in any case before.\n";
+            }
+            break;
+        }
+    }
+
+
+
+
     bool ParseUrl(const std::string& fullUrl, std::string& hostname, std::string& port, std::string& path);
-
-
-
 
 
     template <class Request_Class>
@@ -55,17 +173,13 @@ namespace client
 
         // Send the header to the server
 
-
         request.header.payload_size = sizeof(request.payload);
-
         if (send(client_socket, reinterpret_cast<char*>(&request.header), sizeof(request.header), 0) == SOCKET_ERROR) {
             std::cerr << "Header send failed." << std::endl;
             closesocket(client_socket);
             WSACleanup();
             return {};
         }
-        
-        
 
         // Send the payload (name) to the server
         if (send(client_socket, reinterpret_cast<char*>(&request.payload), request.header.payload_size, 0) == SOCKET_ERROR) {
@@ -74,9 +188,6 @@ namespace client
             WSACleanup();
             return {};
         }
-
-
-
 
         // Receive data from the server
         std::vector<char> received_data(1024); // Adjust buffer size as needed
@@ -90,9 +201,7 @@ namespace client
         }
 
         // Resize the received data buffer to the actual size received
-        
         received_data.resize(bytes_received);
-
         // Deserialize the header
         if (received_data.size() < sizeof(response_header)) {
             std::cerr << "Received data is too small for the header." << std::endl;
@@ -111,82 +220,18 @@ namespace client
             return {};
         }
 
-       // Payload payload = DeserializePayload(received_data);
+        // Payload payload = DeserializePayload(received_data);
         response.payload = std::vector<char>(received_data.begin() + sizeof(response_header), received_data.begin() + sizeof(response_header) + response.header.payload_size);
-      
+
         // Close the socket and cleanup
         closesocket(client_socket);
         WSACleanup();
-        
+
         return response;
     }
 
 
 
-    void handel_response(response&& response)
-    {
-        switch (response.get_response_code())
-        {
-            case response_code::register_success:
-            {
-                response_payload<response2100> payload(response);
-                std::memcpy(&payload, response.payload.data(), response.header.payload_size);
-                payload.client_id[sizeof(payload) - 1] = '\0';
-
-                config::set_client_id(payload.client_id);
-
-
-                client::request<client::request1026> request_send_public_key{};
-                std::vector<unsigned char> public_key{};
-                client::generate_rsa_keys(config::private_key, public_key);
-                request_send_public_key.payload.set_name(config::name);
-                request_send_public_key.payload.set_public_key(public_key.data());
-                handel_response(send_request(config::transfer.ip_address, config::transfer.port, request_send_public_key));
-            }
-            break;
-            case response_code::register_fail:
-            {
-                std::cerr << "user name: '" << config::name << "' already exist" << std::endl;
-                std::cerr << "end the program" << std::endl;
-            }
-            break;
-            case response_code::public_key_received_sending_aes:
-            {
-                response_payload<response2102> response{};
-            }
-            break;
-            case response_code::file_received_successfully_with_crc:
-            {
-                response_payload<response2103> response{};
-            }
-            break;
-            case response_code::approval_message_receiving:
-            {
-                response_payload<response2104> response{};
-            }
-            break;
-            case response_code::approval_reconnection_request_send_crypted_aes:
-            {
-                response_payload<response2105> response{};
-            }
-            break;
-            case response_code::denined_reconnection_request_client_should_register_again:
-            {
-                response_payload<response2106> response{};
-            }
-            break;
-            case response_code::global_server_error:
-            {
-                response_payload<response2107> response{};
-            }
-            break;
-            default:// response_code::response_error:
-            {
-                std::cerr << "Message sending failed or no response received." << std::endl;
-            }
-            break;
-        }
-    }
 
 
 

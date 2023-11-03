@@ -105,7 +105,7 @@ namespace client
 	{
 		request_header()
 		{
-			strncpy_s(this->client_id, config::client_id, sizeof(this->client_id));
+			memcpy(&this->client_id, &config::client_id, sizeof(this->client_id));
 		}
 		char client_id[16]{};
 		const uint8_t version{ config::client_version };
@@ -197,16 +197,21 @@ namespace client
 	};
 
 
+#pragma pack(pop)
+
+
+
+
+
+
+
+
+
 	// Response			all response codes
 
 	template <class Response_Class>
 	struct response_payload : Response_Class 
 	{
-		response_payload() = default; //TODO: delele
-		response_payload(response& _response)
-		{
-			std::memcpy(this, _response.payload.data(), _response.header.payload_size);
-		}
 	};
 
 	struct response2100 
@@ -219,7 +224,7 @@ namespace client
 	struct response2102 : response2100
 	{
 		//char client_id[16]{};
-		std::string aes_key{};
+		std::vector<char> aes_key;	//cant set it with #pragma pack(push, 1)
 	};
 	struct response2103 : response2100
 	{
@@ -249,7 +254,7 @@ namespace client
 
 
 
-#pragma pack(pop)
+
 
 
 

@@ -6,11 +6,14 @@
 #include <iomanip>
 #include <cstring>
 #include <vector>
+#include <utility>
 
 #include <cryptopp/aes.h>
+#include <cryptopp/filters.h>
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/files.h>
+#include <cryptopp/crc.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/md5.h>
 #include <cryptopp/modes.h>
@@ -21,7 +24,94 @@
 
 namespace client
 {
+    std::vector<char> read_data_from_file(const std::string& filePath) 
+    {
+        std::ifstream inputFile(filePath, std::ios::binary);
+        if (!inputFile.is_open()) {
+            return std::vector<char>();
+        }
 
+        inputFile.seekg(0, std::ios::end);
+        size_t fileSize = inputFile.tellg();
+        inputFile.seekg(0, std::ios::beg);
+
+        std::vector<char> fileData(fileSize);
+        inputFile.read(fileData.data(), fileSize);
+        inputFile.close();
+
+        return fileData;
+    }
+
+    std::vector<char> encrypt_with_aes(const std::vector<char>& data, const std::string& aesKey) {
+        CryptoPP::AutoSeededRandomPool prng;
+        byte iv[CryptoPP::AES::BLOCKSIZE];
+        prng.GenerateBlock(iv, sizeof(iv));
+
+        CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
+        CryptoPP::SecByteBlock keyBlock(reinterpret_cast<const byte*>(aesKey.data()), aesKey.size());
+        encryptor.SetKeyWithIV(keyBlock, keyBlock.size(), iv);
+
+        std::string encryptedData;
+        CryptoPP::ArraySource(reinterpret_cast<const byte*>(data.data()), data.size(), true,
+            new CryptoPP::StreamTransformationFilter(encryptor, new CryptoPP::StringSink(encryptedData))
+        );
+
+        return std::vector<char>(encryptedData.begin(), encryptedData.end());
+    }
+
+
+    std::string calculate_crc32(const std::vector<char>& data) {
+        std::string result;
+        CryptoPP::CRC32 hash;
+        CryptoPP::FileSource(data.data(), true,
+            new CryptoPP::HashFilter(hash,
+                new CryptoPP::StringSink(result)));
+        std::cout << "crc '" << result << "'" << std::endl;
+        return result;
+    }
+
+    std::pair<std::vector<char>, std::vector<uint8_t>> encryptFileWithAES(const std::string& key, const std::string& filePath) {
+        CryptoPP::AutoSeededRandomPool prng;
+
+        // Generate a random IV
+        byte iv[CryptoPP::AES::BLOCKSIZE];
+        prng.GenerateBlock(iv, sizeof(iv));
+
+        // Read the file content
+        std::ifstream inputFile(filePath, std::ios::binary);
+        if (!inputFile.is_open()) {
+            std::cerr << "Failed to open the input file." << std::endl;
+            return std::make_pair(std::vector<char>(), std::vector<uint8_t>());
+        }
+
+        inputFile.seekg(0, std::ios::end);
+        size_t fileSize = inputFile.tellg();
+        inputFile.seekg(0, std::ios::beg);
+
+        std::vector<char> fileContent(fileSize);
+        inputFile.read(fileContent.data(), fileSize);
+        inputFile.close();
+
+        // Set up AES encryption
+        CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
+        CryptoPP::SecByteBlock keyBlock(reinterpret_cast<const byte*>(key.data()), key.size());
+        encryptor.SetKeyWithIV(keyBlock, keyBlock.size(), iv);
+
+        // Encrypt the file content
+        std::string encryptedData;
+        CryptoPP::ArraySource(reinterpret_cast<const byte*>(fileContent.data()), fileSize, true,
+            new CryptoPP::StreamTransformationFilter(encryptor, new CryptoPP::StringSink(encryptedData))
+        );
+
+        // Calculate the CRC32 checksum of the original file content as a byte array
+        CryptoPP::CRC32 crc;
+        crc.Update(reinterpret_cast<const byte*>(fileContent.data()), fileSize);
+        std::vector<uint8_t> checksumValue;
+        checksumValue.resize(CryptoPP::CRC32::DIGESTSIZE);
+        //crc.GetCrc32(checksumValue.data());
+
+        return std::make_pair(std::vector<char>(encryptedData.begin(), encryptedData.end()), checksumValue);
+    }
     // Function for AES encryption
 
     std::string encrypt_aes(const std::string& plaintext, const CryptoPP::SecByteBlock& key, const CryptoPP::SecByteBlock& iv)

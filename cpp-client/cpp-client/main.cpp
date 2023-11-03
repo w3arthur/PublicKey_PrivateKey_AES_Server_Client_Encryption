@@ -22,10 +22,9 @@ int main()
     client::request<client::request1025> request{};
     request.payload.set_name(client::config::name);
 
+    client::response res = client::send_request(config::transfer.ip_address, config::transfer.port, request);
+    handel_response(res);
     
-    handel_response(client::send_request(config::transfer.ip_address, config::transfer.port, request));
-    
-
 
 
 
