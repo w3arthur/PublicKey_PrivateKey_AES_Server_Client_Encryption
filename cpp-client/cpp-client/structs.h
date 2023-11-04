@@ -66,7 +66,7 @@ namespace client
 			message_content.reserve(_content_size);
 		}
 		uint32_t content_size{};
-		std::vector<unsigned char> message_content{};
+		std::string message_content{};
 	};
 	struct request1029 
 	{
@@ -119,6 +119,7 @@ namespace client
 	{
 		request_header<Request_Class> header{};
 		request_payload<Request_Class> payload{};
+		std::string custom_payload{};
 	};
 
 #pragma pack(pop)

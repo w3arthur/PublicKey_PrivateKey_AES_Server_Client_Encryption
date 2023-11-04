@@ -19,7 +19,7 @@ namespace client
 
 
 	template <class Request_Class>
-	response send_request(const std::string& serverIP, unsigned short int serverPort, request<Request_Class>& request, const uint32_t payload_custom_size) // = 0
+	response send_request(const std::string& serverIP, unsigned short int serverPort, request<Request_Class>& request)
 	{
 	    WSADATA wsaData;
 	    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -49,8 +49,9 @@ namespace client
 	    }
 
 	    // Send the header to the server
-	    request.header.payload_size = payload_custom_size == 0 ? sizeof(request.payload) : payload_custom_size; // send payload_custom_size if sett
-	    if (send(client_socket, reinterpret_cast<char*>(&request.header), sizeof(request.header), 0) == SOCKET_ERROR) {
+	    request.header.payload_size = request.custom_payload.size() == 0 ? sizeof(request.payload) : request.custom_payload.size(); // send payload_custom_size if sett
+	    if (send(client_socket, reinterpret_cast<char*>(&request.header), sizeof(request.header), 0) == SOCKET_ERROR)
+		{
 	        std::cerr << "Header send failed." << std::endl;
 	        closesocket(client_socket);
 	        WSACleanup();
@@ -58,7 +59,7 @@ namespace client
 	    }
 
 	    // Send the payload (name) to the server
-	    if (send(client_socket, reinterpret_cast<char*>(&request.payload), request.header.payload_size, 0) == SOCKET_ERROR) {
+	    if (send(client_socket, request.custom_payload.size() == 0 ? reinterpret_cast<char*>(&request.payload) : request.custom_payload.data(), request.header.payload_size, 0) == SOCKET_ERROR) {
 	        std::cerr << "Payload send failed." << std::endl;
 	        closesocket(client_socket);
 	        WSACleanup();

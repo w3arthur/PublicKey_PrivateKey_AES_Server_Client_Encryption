@@ -9,8 +9,6 @@
 namespace client
 {
 
-    template <class Request_Class>
-    response send_request(const std::string& serverIP, unsigned short int serverPort, request<Request_Class>& request, const uint32_t payload_custom_size = 0);
 
     inline void handel_response(response& response)
     {
@@ -77,12 +75,16 @@ namespace client
                 //const std::vector<unsigned char> aes = decrypt_aes_key(config::private_key, aaa);
 
                 request<request1028> request_send_a_file;
-                request_send_a_file.payload.message_content = encrypt_with_aes(file_data, aes_encrypted_64);
-
-                //auto dfile = decrypt_with_aes(request_send_a_file.payload.message_content, aes_encrypted_64);
+                request_send_a_file.payload.message_content =(encrypt_with_aes(file_data, aes_encrypted_64)) ;
                 request_send_a_file.payload.content_size = static_cast<uint32_t>(request_send_a_file.payload.message_content.size());
+                //auto dfile = decrypt_with_aes(request_send_a_file.payload.message_content, aes_encrypted_64);
+
+
+                std::string serialized_content_size(reinterpret_cast<char*>(&request_send_a_file.payload.content_size), sizeof(request_send_a_file.payload.content_size));
+                request_send_a_file.custom_payload.append(serialized_content_size);
+                request_send_a_file.custom_payload.append(request_send_a_file.payload.message_content);
                 const uint32_t payload_custom_size = request_send_a_file.payload.message_content.size() + static_cast<uint32_t>(sizeof(request_send_a_file.payload.content_size));
-                client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_send_a_file, payload_custom_size);
+                client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_send_a_file);
                     //TODO: handle response
                 handel_response(res);
             }

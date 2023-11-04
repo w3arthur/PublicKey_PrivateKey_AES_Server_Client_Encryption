@@ -20,6 +20,9 @@
 #include <cryptopp/osrng.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/oaep.h>
+
+#include "http_request.h"
+
 namespace client
 {
 
@@ -181,7 +184,9 @@ namespace client
 
     inline CryptoPP::SecByteBlock vector_to_sec_block(const std::vector<unsigned char>& vec);
 
-    std::vector<unsigned char> encrypt_with_aes(const std::vector<char>& plaintext, const std::string& aesKey)
+
+
+    std::string encrypt_with_aes(const std::vector<char>& plaintext, const std::string& aesKey)
     {
         // Calculate the hash of the dynamic key to get a fixed-size key (e.g., 192 bits)
         CryptoPP::SHA256 hash;
@@ -195,17 +200,24 @@ namespace client
         CryptoPP::SecByteBlock keyBlock = vector_to_sec_block(fixedSizeKey);
 
         CryptoPP::AES::Encryption aesEncryption(keyBlock, keyBlock.size());
-        CryptoPP::ECB_Mode_ExternalCipher::Encryption ecbEncryption(aesEncryption);
+        CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE] = { 0 };
+        CryptoPP::CBC_Mode_ExternalCipher::Encryption ecbEncryption(aesEncryption, iv);
 
         std::string ciphertextString;
 
-        CryptoPP::StreamTransformationFilter stfEncryptor(ecbEncryption, new CryptoPP::StringSink(ciphertextString));
-        stfEncryptor.Put(reinterpret_cast<const CryptoPP::byte*>(plaintext.data()), plaintext.size());
-        stfEncryptor.MessageEnd();
 
-        std::vector<unsigned char> ciphertext(ciphertextString.begin(), ciphertextString.end());
+        CryptoPP::StringSource((CryptoPP::byte *)plaintext.data(), plaintext.size(), true,
+            new CryptoPP::StreamTransformationFilter(ecbEncryption,
+                new CryptoPP::Base64Encoder(
+                    new CryptoPP::StringSink(ciphertextString),
+                    false // Insert line breaks
+                )
+            )
+        );
 
-        return ciphertext;
+
+
+        return ciphertextString;
     }
 
     //testing purposes, decryption function

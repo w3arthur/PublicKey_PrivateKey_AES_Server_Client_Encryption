@@ -74,9 +74,9 @@ if __name__ != "__main__":
         # Receive the payload data based on payload_size
         payload_data = client_socket.recv(payload_size)
         name: str = get_string(payload_data, "<255s")
-        # if (check_client(name)):  # is a client
+        # if (sql_lite_util.check_client(name)):  # is a client
         #     code: int = 2101
-        #     header = Header(code, 0)
+        #     header = classes.Header(code, 0)
         #     header_bytes = header.serialize()
         #     message = header_bytes
         #     client_socket.send(message)
@@ -146,7 +146,7 @@ if __name__ != "__main__":
             request1028_format_package, _package_aes_file_value)
 
         decrypted_file = encrypting_util.decrypt_with_aes(
-            base64_aes_key, package_aes_file_value)
+            base64_aes_key, package_aes_file_value.decode('utf-8'))
 
         pass
 
