@@ -15,27 +15,11 @@ if __name__ != "__main__":
 
     def generate_aes_key():
         aes_key = os.urandom(32)  # 24 bytes for AES-192
-        return base64.urlsafe_b64encode(aes_key).decode('utf-8')
-
-    # Function to encrypt plaintext with AES key
-    def encrypt_with_aes(aes_key, plaintext):
-        aes_key_bytes = base64.urlsafe_b64decode(aes_key)
-        cipher = Cipher(algorithms.AES(aes_key_bytes),
-                        modes.ECB(), backend=default_backend())
-        encryptor = cipher.encryptor()
-
-        # Apply PKCS7 padding to the plaintext
-        padder = PKCS7(algorithms.AES.block_size).padder()
-        padded_plaintext = padder.update(
-            plaintext.encode('utf-8')) + padder.finalize()
-
-        # Encrypt the padded plaintext
-        ciphertext = encryptor.update(padded_plaintext) + encryptor.finalize()
-        return base64.urlsafe_b64encode(ciphertext).decode('utf-8')
+        return base64.urlsafe_b64encode(aes_key).decode('utf-8'), aes_key
 
     # Function to decrypt ciphertext with AES key
     def decrypt_with_aes(aes_key, ciphertext):
-        aes_key_bytes = base64.urlsafe_b64decode(aes_key)
+        aes_key_bytes = aes_key  # base64.urlsafe_b64decode(aes_key)
         iv_bytes = b'\x00' * 16  # IV of all zeros (16 bytes)
         cipher = Cipher(algorithms.AES(aes_key_bytes), modes.CBC(
             iv_bytes), backend=default_backend())

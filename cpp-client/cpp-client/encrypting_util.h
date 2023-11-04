@@ -182,12 +182,27 @@ namespace client
 	}
 
 
-    inline CryptoPP::SecByteBlock vector_to_sec_block(const std::vector<unsigned char>& vec);
+    
 
 
-    std::vector<unsigned char> decode_aes_key(const std::string& aesKeyBase64) {
+    std::vector<unsigned char> decode_aes_key(const std::string& aesKeyBase64)
+	{
+        std::string encodedString(aesKeyBase64);
+
+        // Replace URL-safe characters back to the base64 encoding
+        std::replace(encodedString.begin(), encodedString.end(), '-', '+');
+        std::replace(encodedString.begin(), encodedString.end(), '_', '/');
+
+        // Calculate the required padding
+        size_t padding = 4 - (encodedString.size() % 4);
+
+        // Append padding characters if needed
+        if (padding < 4) {
+            encodedString.append(padding, '=');
+        }
+
         std::string decodedString;
-        CryptoPP::StringSource(aesKeyBase64, true,
+        CryptoPP::StringSource(encodedString, true,
             new CryptoPP::Base64Decoder(
                 new CryptoPP::StringSink(decodedString)
             )
@@ -198,16 +213,18 @@ namespace client
     }
 
 
+
+    inline CryptoPP::SecByteBlock vector_to_sec_block(const std::vector<unsigned char>& vec);
     std::string encrypt_with_aes(const std::vector<char>& plaintext, const std::string& aesKey)
     {
         // Use the AES key directly (no additional hashing)
 
-        std::vector<unsigned char> aesKeyB = decode_aes_key(aesKey);
-        if(aesKeyB.size() < 32) 
+        std::vector<unsigned char> aesKeyBin = decode_aes_key(aesKey);
+        if(aesKeyBin.size() < 32) 
         { 
-            aesKeyB.resize(32);
+            aesKeyBin.resize(32);
         }
-        CryptoPP::SecByteBlock key(reinterpret_cast<const CryptoPP::byte*>(aesKeyB.data()), aesKeyB.size());
+        CryptoPP::SecByteBlock key(reinterpret_cast<const CryptoPP::byte*>(aesKeyBin.data()), aesKeyBin.size());
 
         // Initialization Vector (IV) of all zeros (16 bytes)
         CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE] = { 0 };
@@ -231,33 +248,7 @@ namespace client
         return ciphertextString;
     }
 
-    //testing purposes, decryption function
-    std::vector<char> decrypt_with_aes(const std::vector<unsigned char>& ciphertext, const std::string& aesKey)
-    {
-        // Calculate the hash of the dynamic key to get a fixed-size key (e.g., 192 bits)
-        CryptoPP::SHA256 hash;
-        std::vector<unsigned char> hashResult(32);  // 32 bytes for the SHA-256 hash
-        hash.CalculateDigest(hashResult.data(), reinterpret_cast<const CryptoPP::byte*>(aesKey.data()), aesKey.size());
 
-        // Truncate the hash to 192 bits (24 bytes)
-        std::vector<unsigned char> fixedSizeKey(24);
-        std::copy(hashResult.begin(), hashResult.begin() + 24, fixedSizeKey.begin());
-
-        CryptoPP::SecByteBlock keyBlock = vector_to_sec_block(fixedSizeKey);
-
-        CryptoPP::AES::Decryption aesDecryption(keyBlock, keyBlock.size());
-        CryptoPP::ECB_Mode_ExternalCipher::Decryption ecbDecryption(aesDecryption);
-
-        std::string decryptedString;
-
-        CryptoPP::StreamTransformationFilter stfDecryptor(ecbDecryption, new CryptoPP::StringSink(decryptedString));
-        stfDecryptor.Put(reinterpret_cast<const CryptoPP::byte*>(ciphertext.data()), ciphertext.size());
-        stfDecryptor.MessageEnd();
-
-        std::vector<char> decryptedData(decryptedString.begin(), decryptedString.end());
-
-        return decryptedData;
-    }
 
     inline CryptoPP::SecByteBlock vector_to_sec_block(const std::vector<unsigned char>& vec)
     {

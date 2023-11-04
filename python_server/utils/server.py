@@ -100,11 +100,11 @@ if __name__ != "__main__":
             request1026_format, payload_data)
 
         name: str = get_string(_name, "255s")
-        encrypted_aes_key = encrypting_util.generate_aes_key()
+        encrypted_aes_key, aes_key_db = encrypting_util.generate_aes_key()
         # public_key = public_key_bytes.hex()  # continue
         client_id_str = sql_lite_util.uuid_to_string(client_id)
         sql_lite_util.update_keys_in_clients_table(
-            client_id_str, public_key_bytes, encrypted_aes_key)
+            client_id_str, public_key_bytes, aes_key_db)
         code: int = 2102
         payload = classes.Payload2102(client_id, encrypted_aes_key)
         header = classes.Header(code, payload.size())
@@ -122,9 +122,9 @@ if __name__ != "__main__":
         print('1028 Receive file and check sum')
 
         client_id_str = sql_lite_util.uuid_to_string(client_id)
-        name, public_key_bytes, base64_aes_key = sql_lite_util.get_client_info_by_id(
+        name, public_key_bytes, byte_aes_key = sql_lite_util.get_client_info_by_id(
             client_id_str)
-        if name is None or not public_key_bytes or not base64_aes_key:
+        if name is None or not public_key_bytes or not byte_aes_key:
             pass
 
         request1028_format_package_size = "<I"
@@ -146,7 +146,7 @@ if __name__ != "__main__":
             request1028_format_package, _package_aes_file_value)
 
         decrypted_file = encrypting_util.decrypt_with_aes(
-            base64_aes_key, package_aes_file_value.decode('utf-8'))
+            byte_aes_key, package_aes_file_value.decode('utf-8'))
 
         pass
 

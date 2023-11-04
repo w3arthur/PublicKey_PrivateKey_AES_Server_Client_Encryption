@@ -18,7 +18,7 @@ if __name__ != "__main__":
                 Name VARCHAR(255),
                 PublicKey VARCHAR(160),
                 LastSeen DATETIME DEFAULT CURRENT_TIMESTAMP,
-                AESKey VARCHAR(172)
+                AESKey VARCHAR(128)
             )'''
 
         cursor.execute(query)
