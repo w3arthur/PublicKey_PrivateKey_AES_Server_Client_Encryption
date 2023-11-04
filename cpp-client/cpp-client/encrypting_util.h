@@ -185,37 +185,48 @@ namespace client
     inline CryptoPP::SecByteBlock vector_to_sec_block(const std::vector<unsigned char>& vec);
 
 
+    std::vector<unsigned char> decode_aes_key(const std::string& aesKeyBase64) {
+        std::string decodedString;
+        CryptoPP::StringSource(aesKeyBase64, true,
+            new CryptoPP::Base64Decoder(
+                new CryptoPP::StringSink(decodedString)
+            )
+        );
+
+        std::vector<unsigned char> aesKey(decodedString.begin(), decodedString.end());
+        return aesKey;
+    }
+
 
     std::string encrypt_with_aes(const std::vector<char>& plaintext, const std::string& aesKey)
     {
-        // Calculate the hash of the dynamic key to get a fixed-size key (e.g., 192 bits)
-        CryptoPP::SHA256 hash;
-        std::vector<unsigned char> hashResult(32);  // 32 bytes for the SHA-256 hash
-        hash.CalculateDigest(hashResult.data(), reinterpret_cast<const CryptoPP::byte*>(aesKey.data()), aesKey.size());
+        // Use the AES key directly (no additional hashing)
 
-        // Truncate the hash to 192 bits (24 bytes)
-        std::vector<unsigned char> fixedSizeKey(24);
-        std::copy(hashResult.begin(), hashResult.begin() + 24, fixedSizeKey.begin());
+        std::vector<unsigned char> aesKeyB = decode_aes_key(aesKey);
+        if(aesKeyB.size() < 32) 
+        { 
+            aesKeyB.resize(32);
+        }
+        CryptoPP::SecByteBlock key(reinterpret_cast<const CryptoPP::byte*>(aesKeyB.data()), aesKeyB.size());
 
-        CryptoPP::SecByteBlock keyBlock = vector_to_sec_block(fixedSizeKey);
-
-        CryptoPP::AES::Encryption aesEncryption(keyBlock, keyBlock.size());
+        // Initialization Vector (IV) of all zeros (16 bytes)
         CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE] = { 0 };
-        CryptoPP::CBC_Mode_ExternalCipher::Encryption ecbEncryption(aesEncryption, iv);
+
+        // Create an AES encryption object with CBC mode
+        CryptoPP::AES::Encryption aesEncryption(key, key.size());
+        CryptoPP::CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
 
         std::string ciphertextString;
 
-
-        CryptoPP::StringSource((CryptoPP::byte *)plaintext.data(), plaintext.size(), true,
-            new CryptoPP::StreamTransformationFilter(ecbEncryption,
+        // Encrypt the plaintext
+        CryptoPP::StringSource((CryptoPP::byte*)plaintext.data(), plaintext.size(), true,
+            new CryptoPP::StreamTransformationFilter(cbcEncryption,
                 new CryptoPP::Base64Encoder(
                     new CryptoPP::StringSink(ciphertextString),
                     false // Insert line breaks
                 )
             )
         );
-
-
 
         return ciphertextString;
     }

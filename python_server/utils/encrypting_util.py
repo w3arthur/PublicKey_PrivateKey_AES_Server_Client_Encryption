@@ -37,11 +37,11 @@ if __name__ != "__main__":
     def decrypt_with_aes(aes_key, ciphertext):
         aes_key_bytes = base64.urlsafe_b64decode(aes_key)
         iv_bytes = b'\x00' * 16  # IV of all zeros (16 bytes)
-        cipher = Cipher(algorithms.AES(aes_key_bytes), modes.CFB(
+        cipher = Cipher(algorithms.AES(aes_key_bytes), modes.CBC(
             iv_bytes), backend=default_backend())
         decryptor = cipher.decryptor()
 
-        # Decode the padded base64 string and decrypt it
+        # Decode the base64 string and decrypt it
         ciphertext_bytes = base64.urlsafe_b64decode(ciphertext)
         decrypted_data = decryptor.update(ciphertext_bytes)
 
@@ -51,6 +51,7 @@ if __name__ != "__main__":
             print("Error:", e)
             return None
 
+        # Add errors='ignore' to handle decoding errors
         return decrypted_data.decode('utf-8', errors='ignore')
 
     # aes_key = generate_aes_key()
