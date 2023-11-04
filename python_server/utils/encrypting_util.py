@@ -1,58 +1,41 @@
 if __name__ != "__main__":
     # TODO: clear comment
     import base64
-    import socket
-    import threading
+    import os
+    import secrets
     from Crypto.Cipher import AES
     import hashlib
     from cryptography.fernet import Fernet
-    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives import serialization, hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.primitives.asymmetric import padding, rsa
-    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.backends import default_backend
 
-    def decrypt_with_aes_ecb(ciphertext, aes_key):
-        # Create an AES cipher object in ECB mode with the provided key
-        cipher = AES.new(aes_key, AES.MODE_ECB)
+    def generate_aes_key():
+        aes_key = os.urandom(24)  # 24 bytes for AES-192
+        return base64.urlsafe_b64encode(aes_key).decode('utf-8')
+
+    # Function to encrypt plaintext with AES key
+    def encrypt_with_aes(aes_key, plaintext):
+        aes_key_bytes = base64.urlsafe_b64decode(aes_key)
+        cipher = Cipher(algorithms.AES(aes_key_bytes),
+                        modes.ECB(), backend=default_backend())
+        encryptor = cipher.encryptor()
+        ciphertext = encryptor.update(
+            plaintext.encode('utf-8')) + encryptor.finalize()
+        return base64.urlsafe_b64encode(ciphertext).decode('utf-8')
+
+    # Function to decrypt ciphertext with AES key
+    def decrypt_with_aes(aes_key, ciphertext):
+        aes_key_bytes = base64.urlsafe_b64decode(aes_key)
+        cipher = Cipher(algorithms.AES(aes_key_bytes),
+                        modes.ECB(), backend=default_backend())
+        decryptor = cipher.decryptor()
 
         # Decrypt the ciphertext
-        decrypted_data = cipher.decrypt(ciphertext)
+        ciphertext_bytes = base64.urlsafe_b64decode(ciphertext)
+        decrypted_data = decryptor.update(
+            ciphertext_bytes) + decryptor.finalize()
 
-        # Remove any padding (if used during encryption)
-        return decrypted_data.rstrip(b"\0")
-
-    # TODO: delete:
-
-    def generate_and_encrypt_aes_key(public_key_bytes):
-        public_key = serialization.load_der_public_key(public_key_bytes)
-        aes_key = Fernet.generate_key()
-        # Encrypt the AES key with the recipient's public key
-        encrypted_aes_key = public_key.encrypt(
-            aes_key,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
-
-        return base64.b64encode(encrypted_aes_key).decode('utf-8'), base64.urlsafe_b64encode(aes_key).decode('utf-8')
-
-    # פונקציה להצפנת נתונים בAES
-
-    def encrypt(data, key):
-        cipher = AES.new(key, AES.MODE_EAX)
-        ciphertext, tag = cipher.encrypt_and_digest(data)
-        return ciphertext
-
-    def calculate_checksum(data):
-        return hashlib.md5(data).hexdigest()
-
-    def handle_client(client_socket, clients):
-        # הודעה מהלקוח
-        request = client_socket.recv(1024)
-        # מימוש הפרוטוקול כאן
-        # ...
-        # תגובה ללקוח
-        response = "תשובת השרת"
-        client_socket.send(response.encode())
-        client_socket.close()
+        return decrypted_data.decode('utf-8')

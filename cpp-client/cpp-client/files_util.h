@@ -74,10 +74,19 @@ namespace client
 
     inline void set_identifier_write_to_file(const identifier& identifier)
     {
-        std::ofstream me_info_file(config::me_info_file_name);
+        if (std::remove(config::me_info_file_name) != 0) 
+        {
+            std::cerr << "Failed to delete the existing file." << std::endl;
+        }
+        std::ofstream me_info_file(config::me_info_file_name, std::ios::out | std::ios::trunc);
+        if (!me_info_file.is_open()) 
+        {
+            std::cerr << "Failed to open the file for writing." << std::endl;
+            me_info_file.close();
+        }
         me_info_file << identifier.name << std::endl;
-        me_info_file << identifier.private_key << std::endl;
         me_info_file << identifier.id << std::endl;
+        me_info_file << identifier.private_key << std::endl;
         me_info_file.close();
     }
 

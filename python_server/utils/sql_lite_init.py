@@ -4,8 +4,11 @@ if __name__ != "__main__":
     import config  # as config
 
     def delete_database_file_name():
-        if os.path.exists(config.database_file_name):
-            os.remove(config.database_file_name)
+        try:
+            if os.path.exists(config.database_file_name):
+                os.remove(config.database_file_name)
+        except Exception as ex:
+            print('cant delete the db file to reset it')
 
     def create_clients_table():
         conn = sqlite3.connect(config.database_file_name)
@@ -15,7 +18,7 @@ if __name__ != "__main__":
                 Name VARCHAR(255),
                 PublicKey VARCHAR(160),
                 LastSeen DATETIME DEFAULT CURRENT_TIMESTAMP,
-                AESKey VARCHAR(128)
+                AESKey VARCHAR(172)
             )'''
 
         cursor.execute(query)

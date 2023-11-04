@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <exception>
+
+
 #include <ws2tcpip.h>
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib") // Link against the Win sock library
@@ -26,7 +28,7 @@ namespace client
 	    }
 
 	    // Create a socket
-	    SOCKET client_socket = socket(AF_INET, SOCK_STREAM, 0);
+	    const SOCKET client_socket = socket(AF_INET, SOCK_STREAM, 0);
 	    if (client_socket == INVALID_SOCKET) {
 	        std::cerr << "Socket creation failed." << std::endl;
 	        WSACleanup();
@@ -151,6 +153,10 @@ namespace client
 
 	    return true;
 	}
+
+
+
+
 
 }
 

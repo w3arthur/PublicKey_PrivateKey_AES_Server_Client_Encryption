@@ -13,6 +13,16 @@ namespace client
 		unsigned short int port{};
 		std::string name{};
 		std::string file_address{};
+		transfer& operator=(const transfer& other)
+		{
+			if (this != &other) {
+				ip_address = other.ip_address;
+				port = other.port;
+				name = other.name;
+				file_address = other.file_address;
+			}
+			return *this;
+		}
 
 	};
 
@@ -22,6 +32,16 @@ namespace client
 		std::string name{};
 		std::string id{};	//unique//ascii hex
 		std::string private_key{};
+		identifier& operator=(const identifier& other)
+		{
+			if (this != &other) {
+				is_available = other.is_available;
+				name = other.name;
+				id = other.id;
+				private_key = other.private_key;
+			}
+			return *this;
+		}
 	} ;
 
 	namespace config
@@ -29,14 +49,14 @@ namespace client
 		uint8_t login_tries = 0, file_seneding_tries = 0;
 		constexpr uint8_t max_login_tries = 3, max_file_send_tries = 3;
 
-		client::identifier identyfier;
-		client::transfer transfer;
+		client::identifier identyfier{};
+		client::transfer transfer{};
 		std::string name;
 
 		constexpr uint8_t client_version{ 3 };
 		constexpr uint8_t client_id_size = 16;
-		std::vector<char> client_id(client_id_size);
-		void set_client_id(const char* new_client_id)
+		char client_id[client_id_size]{};
+		inline void set_client_id(const char* new_client_id)
 		{
 			std::memcpy(&client_id, new_client_id, client_id_size);
 		}

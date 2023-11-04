@@ -11,10 +11,19 @@ int main()
     using namespace client;
 
     // TODO: add error handler
-    config::transfer = client::get_transfer_read_form_file();
     config::identyfier = client::get_identifier_read_form_file();
-    config::name = !config::identyfier.is_available ? config::transfer.name : config::transfer.name;
-   
+    config::transfer = client::get_transfer_read_form_file();
+    if(config::identyfier.is_available)
+    {
+        config::name = config::identyfier.name;
+        convert_uuid_string_to_bytes(config::identyfier.id, config::client_id);
+    }
+    else
+    {
+        config::name = config::transfer.name;
+    }
+    
+
     request<client::request1025> request;
     request.payload.set_name(config::name);
 

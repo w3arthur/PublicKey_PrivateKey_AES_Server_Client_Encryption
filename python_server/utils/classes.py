@@ -26,7 +26,7 @@ if __name__ != "__main__":
             return self.client_id[:16]
 
         def size(self):
-            return len(self.serialize())  # TODO: improve
+            return 16  # TODO: improve
 
     class Payload2102:
         client_id = None

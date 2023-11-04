@@ -1,7 +1,6 @@
 if __name__ != "__main__":
     import socket
     import struct
-    import hashlib
 
     import config  # as config
     import utils.classes as classes
@@ -38,6 +37,10 @@ if __name__ != "__main__":
             print('version', version)
             print('code', code)
             print('payload_size', payload_size)
+
+            # update last visited date if available
+            client_id_str = sql_lite_util.uuid_to_string(client_id)
+            sql_lite_util.update_last_seen_by_id(client_id_str)
 
             code_handlers = {
                 1025: handle_code_1025,
@@ -97,9 +100,11 @@ if __name__ != "__main__":
             request1026_format, payload_data)
 
         name: str = get_string(_name, "255s")
-        encrypted_aes_key, aes_key = encrypting_util.generate_and_encrypt_aes_key(
-            public_key_bytes)
-        public_key = public_key_bytes.hex()  # continue
+        encrypted_aes_key = encrypting_util.generate_aes_key()
+        # public_key = public_key_bytes.hex()  # continue
+        client_id_str = sql_lite_util.uuid_to_string(client_id)
+        sql_lite_util.update_keys_in_clients_table(
+            client_id_str, public_key_bytes, encrypted_aes_key)
         code: int = 2102
         payload = classes.Payload2102(client_id, encrypted_aes_key)
         header = classes.Header(code, payload.size())
@@ -115,6 +120,13 @@ if __name__ != "__main__":
     def handle_code_1028(client_socket: object, payload_size, client_id):
         # Receive the payload data based on payload_size
         print('1028 Receive file and check sum')
+
+        client_id_str = sql_lite_util.uuid_to_string(client_id)
+        name, public_key_bytes, base64_aes_key = sql_lite_util.get_client_info_by_id(
+            client_id_str)
+        if name is None or not public_key_bytes or not base64_aes_key:
+            pass
+
         request1028_format_package_size = "<I"
         uint32_t_size = struct.calcsize(request1028_format_package_size)
         if uint32_t_size < payload_size:
@@ -132,6 +144,9 @@ if __name__ != "__main__":
 
         package_aes_file_value, = struct.unpack(
             request1028_format_package, _package_aes_file_value)
+
+        decrypted_file = encrypting_util.decrypt_with_aes(
+            base64_aes_key, package_aes_file_value)
 
         pass
 
