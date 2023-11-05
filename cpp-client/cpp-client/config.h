@@ -49,9 +49,23 @@ namespace client
 		uint8_t login_tries = 0, file_seneding_tries = 0;
 		constexpr uint8_t max_login_tries = 3, max_file_send_tries = 3;
 
-		client::identifier identyfier{};
-		client::transfer transfer{};
+		bool is_login_attempt_available()
+		{
+			login_tries++;
+			return login_tries <= max_login_tries;
+		}
+
+		bool is_file_send_attempt_available()
+		{
+			file_seneding_tries++;
+			return file_seneding_tries <= max_file_send_tries;
+		}
+
+		client::identifier identyfier;
+		client::transfer transfer;
 		std::string name;
+
+		constexpr char filename[255] = "file.txt";
 
 		constexpr uint8_t client_version{ 3 };
 		constexpr uint8_t client_id_size = 16;
@@ -69,6 +83,9 @@ namespace client
 		constexpr char me_info_file_name[100]{ "me.info" };
 		constexpr char read_from_file_name[100] = "file.txt";
 
+		uint32_t file_content_size{};
+		uint32_t file_checksum{};
+
 		void config_reset()
 		{
 			login_tries = 0;
@@ -76,6 +93,9 @@ namespace client
 			identyfier= {};
 			transfer = {};
 			name = "";
+			private_key.clear();
+			file_content_size = 0;
+			file_checksum = 0;
 			set_client_id("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 			//TODO: remove me.info content
 		}

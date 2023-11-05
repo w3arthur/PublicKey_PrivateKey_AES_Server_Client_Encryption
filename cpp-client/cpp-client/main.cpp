@@ -9,7 +9,7 @@
 int main() 
 {
     using namespace client;
-
+    
     // TODO: add error handler
     config::identyfier = client::get_identifier_read_form_file();
     config::transfer = client::get_transfer_read_form_file();
@@ -30,10 +30,12 @@ int main()
     response res = send_request(config::transfer.ip_address, config::transfer.port, request);
     handel_response(res);
 
+    std::cout << "\n" "ok\n" "Main running is done.\n";
 
 #if defined(_DEBUG)
     std::cout << "\n\nDebugging mode\nPress [Enter] to run main() again\n";
     std::cin.get();
+    config::config_reset();
     return main();
 #endif // DEBUG
     return 0;

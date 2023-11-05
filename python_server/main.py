@@ -16,7 +16,7 @@ if __name__ == "__main__":
         client_port_number = get_port_number_from_file(
             config.client_port_info_file_name)
     except Exception as e:
-        print("\033[91m", f"Port Exception: {e}", "\033[0m")
+        config.red_print(f"Port Exception: {e}")
         client_port_number = config.client_default_port_if_the_file_not_exist
 
     server.start_server('localhost', client_port_number)

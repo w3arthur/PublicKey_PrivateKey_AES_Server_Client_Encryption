@@ -27,37 +27,64 @@ namespace client
 {
 
 
+    uint32_t calculate_numeric_checksum(const std::string& data) {
+        CryptoPP::SHA256 hash;
+        std::vector<uint8_t> digest(CryptoPP::SHA256::DIGESTSIZE);
 
+        // Calculate the SHA-256 hash of the input data
+        hash.CalculateDigest(digest.data(), reinterpret_cast<const CryptoPP::byte*>(data.c_str()), data.size());
 
-    inline std::vector<char> read_data_from_file(const std::string& file_path)
-    {
-        std::ifstream input_file(file_path, std::ios::binary);
-        if (!input_file.is_open()) 
-        {
-            return {};
+        // Extract the first 4 bytes of the hash as a uint32_t
+        const uint32_t checksum = *(reinterpret_cast<uint32_t*>(digest.data()));
+
+        return checksum;
+    }
+    /*
+    inline uint32_t calculate_checksum(const std::string& data)
+	{
+        uint32_t checksum = 0;
+        for (char c : data) {
+            checksum = (checksum * 31) + static_cast<uint8_t>(c);  // Simple hash function
         }
+        return checksum;
+    }
+    */
 
-        input_file.seekg(0, std::ios::end);
-        const size_t file_size = input_file.tellg();
-        input_file.seekg(0, std::ios::beg);
-
-        std::vector<char> file_data(file_size);
-        input_file.read(file_data.data(), file_size);
-        input_file.close();
-
-        return file_data;
+    inline std::string read_data_from_file(const std::string& file_path)
+    {
+        std::ifstream file(file_path);
+        if (file) {
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            if(file.is_open())
+            {
+                file.close();
+            }
+            
+            return content;
+        }
+        else {
+            std::cerr << "Failed to open file: " << file_path << std::endl;
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            if (file.is_open())
+            {
+                file.close();
+            }
+            return "";
+        }
     }
 
 
 
     inline void generate_rsa_keys(std::vector<unsigned char>& rsa_private_key, std::vector<unsigned char>& rsa_public_key)
     {
-        if (rsa_private_key.empty() || rsa_public_key.empty()) {
+        if (rsa_private_key.empty() || rsa_public_key.empty()) 
+        {
             CryptoPP::AutoSeededRandomPool rng;
 
             // Generate or load private key
             CryptoPP::RSA::PrivateKey privateKey;
-            if (rsa_private_key.empty()) {
+            if (rsa_private_key.empty()) 
+            {
                 rsa_private_key.reserve(config::security_asymmetric_key_size);
                 CryptoPP::InvertibleRSAFunction params;
                 params.GenerateRandomWithKeySize(rng, config::security_asymmetric_key_size); // Set key size to 1024 bits
@@ -72,7 +99,8 @@ namespace client
                 rsa_private_key.resize(privateKeySize);
                 privateKeyQueue.Get(rsa_private_key.data(), privateKeySize);
             }
-            else {
+            else 
+            {
                 // Decode the loaded private key
                 CryptoPP::ByteQueue privateKeyQueue;
                 privateKeyQueue.Put(rsa_private_key.data(), rsa_private_key.size());
@@ -81,7 +109,8 @@ namespace client
 
             // Generate or load public key
             CryptoPP::RSA::PublicKey publicKey;
-            if (rsa_public_key.empty()) {
+            if (rsa_public_key.empty()) 
+            {
                 publicKey = CryptoPP::RSA::PublicKey(privateKey);
                 publicKey.Validate(rng, 3);
 
@@ -93,14 +122,16 @@ namespace client
                 rsa_public_key.resize(publicKeySize);
                 publicKeyQueue.Get(rsa_public_key.data(), publicKeySize);
             }
-            else {
+            else 
+            {
                 // Decode the loaded public key
                 CryptoPP::ByteQueue publicKeyQueue;
                 publicKeyQueue.Put(rsa_public_key.data(), rsa_public_key.size());
                 publicKey.Load(publicKeyQueue);
             }
         }
-        else {
+        else 
+        {
             // Keys exist, no need to generate new ones
             std::cout << "RSA keys already exist." << std::endl;
         }
@@ -109,20 +140,22 @@ namespace client
 
 
 
-    std::vector<unsigned char> decode_base64(const std::string& input)
+    inline std::vector<unsigned char> decode_base64(const std::string& input)
 	{
         std::string decoded;
-        CryptoPP::StringSource(input, true,
-            new CryptoPP::Base64Decoder(
-                new CryptoPP::StringSink(decoded)
-            )
+        CryptoPP::StringSource
+    	(
+            input,
+            true,
+            new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded))
         );
 
-        return std::vector<unsigned char>(decoded.begin(), decoded.end());
+        std::vector<unsigned char> decoded_string(decoded.begin(), decoded.end());
+        return decoded_string;
     }
 
 
-    std::vector<unsigned char> decrypt_aes_key(const std::vector<unsigned char>& rsa_private_key, const std::vector<unsigned char>& encrypted_aes_key)
+    inline std::vector<unsigned char> decrypt_aes_key(const std::vector<unsigned char>& rsa_private_key, const std::vector<unsigned char>& encrypted_aes_key)
     {
         CryptoPP::AutoSeededRandomPool rng;
         CryptoPP::RSA::PrivateKey privateKey;
@@ -139,14 +172,17 @@ namespace client
         std::string encoded_aes_key(encrypted_aes_key.begin(), encrypted_aes_key.end());
         std::string decrypted_aes_key;
 
-        try {
-            CryptoPP::StringSource(encoded_aes_key, true,
-                new CryptoPP::Base64Decoder(
-                    new CryptoPP::StringSink(decrypted_aes_key)
-                )
+        try 
+        {
+            CryptoPP::StringSource
+        	(
+                encoded_aes_key, 
+                true,
+                new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decrypted_aes_key))
             );
         }
-        catch (const std::exception& e) {
+        catch (const std::exception& e) 
+        {
             // Handle base64 decoding error
             std::cerr << "Error decoding base64: " << e.what() << std::endl;
             return std::vector<unsigned char>();
@@ -157,8 +193,6 @@ namespace client
 
         return decrypted_aes_key_bytes;
     }
-
-
 
 
 
@@ -214,8 +248,8 @@ namespace client
 
 
 
-    inline CryptoPP::SecByteBlock vector_to_sec_block(const std::vector<unsigned char>& vec);
-    std::string encrypt_with_aes(const std::vector<char>& plaintext, const std::string& aesKey)
+
+    std::string encrypt_with_aes(const std::string& plaintext, const std::string& aesKey)
     {
         // Use the AES key directly (no additional hashing)
 
@@ -237,8 +271,11 @@ namespace client
 
         // Encrypt the plaintext
         CryptoPP::StringSource((CryptoPP::byte*)plaintext.data(), plaintext.size(), true,
-            new CryptoPP::StreamTransformationFilter(cbcEncryption,
-                new CryptoPP::Base64Encoder(
+            new CryptoPP::StreamTransformationFilter
+            (
+                cbcEncryption,
+                new CryptoPP::Base64Encoder
+                (
                     new CryptoPP::StringSink(ciphertextString),
                     false // Insert line breaks
                 )
@@ -250,53 +287,8 @@ namespace client
 
 
 
-    inline CryptoPP::SecByteBlock vector_to_sec_block(const std::vector<unsigned char>& vec)
-    {
-        CryptoPP::SecByteBlock secBlock(vec.data(), vec.size());
-        return secBlock;
-    }
 
-
-
-
-
-
-
-    //TODO: to clean
-
-    inline  std::string calculate_crc32(const std::vector<char>& data)
-    {
-        std::string result;
-        CryptoPP::CRC32 hash;
-        CryptoPP::FileSource(data.data(), true,
-            new CryptoPP::HashFilter(hash,
-                new CryptoPP::StringSink(result)));
-        std::cout << "crc '" << result << "'" << std::endl;
-        return result;
-    }
-
-
-    // Function to calculate MD5 checksum
-    inline std::string calculateChecksum(const std::string& data)
-    {
-        CryptoPP::Weak1::MD5 md5;
-        CryptoPP::byte digest[CryptoPP::Weak1::MD5::DIGESTSIZE];
-
-        md5.CalculateDigest(digest, reinterpret_cast<const CryptoPP::byte*>(data.c_str()), data.size());
-
-        CryptoPP::HexEncoder encoder;
-        std::string checksum;
-
-        encoder.Attach(new CryptoPP::StringSink(checksum));
-        encoder.Put(digest, sizeof(digest));
-        encoder.MessageEnd();
-
-        return checksum;
-    }
-
-    //string rsaPrivateKey;
-    //string rsaPublicKey;
-    //string clientName = "YourClientName"; // Replace with the actual client name
+    //TODO: check if requires
 
     inline void saveRSAKeysToFile(const CryptoPP::RSA::PublicKey& key, const std::string& filename)
     {

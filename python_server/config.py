@@ -11,3 +11,14 @@ if __name__ != "__main__":
     database_file_name: str = "defensive.db"
     clients_table_name: str = "clients"
     files_table_name: str = "files"
+
+    filename: str = "file.txt"
+
+    def red_print(string: str):
+        print("\033[91m", string, "\033[0m")
+
+    def green_print(string: str):
+        print("\033[92m", string, "\033[0m")
+
+    def blue_print(string: str):
+        print("\033[94m", string, "\033[0m")

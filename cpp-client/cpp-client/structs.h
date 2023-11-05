@@ -12,7 +12,7 @@
 
 namespace client
 {
-
+#pragma pack(push, 1)
 	// Request			all request codes
 	//Request structs
 
@@ -29,7 +29,7 @@ namespace client
 		crc_wrorng_forth_time_stop = 1031,
 	};
 
-#pragma pack(push, 1)
+
 	template <class Request_Class>
 	struct request_payload : Request_Class
 	{
@@ -122,7 +122,6 @@ namespace client
 		std::string custom_payload{};
 	};
 
-#pragma pack(pop)
 
 
 
@@ -142,7 +141,7 @@ namespace client
 	};
 
 
-#pragma pack(push, 1)
+
 
 	struct response_header
 	{
@@ -198,7 +197,7 @@ namespace client
 	};
 
 
-#pragma pack(pop)
+
 
 
 
@@ -221,18 +220,20 @@ namespace client
 	};
 	struct response2101 
 	{
+
 	};
 	struct response2102 : response2100
 	{
 		//char client_id[16]{};
-		//std::vector<char> aes_key;	//cant set it with #pragma pack(push, 1)
-	};
-	struct response2103 : response2100
+	};////std::string aes_key;
+	struct response2103// : response2100
 	{
-		//char client_id[16]{};
-		unsigned int content_size{};	//after encryption
+		char client_id[16]{};
+		uint32_t content_size{};	//after encryption
 		char file_name[255]{};
-		char cksum[4]{}; //crc
+		uint32_t cksum{}; //crc
+		uint32_t a{};
+		
 	};
 	struct response2104 : response2100 
 	{
@@ -248,9 +249,7 @@ namespace client
 	};
 	struct response2107
 	{
-	};
-	struct responseError 
-	{
+		// Error
 	};
 
 
@@ -263,5 +262,5 @@ namespace client
 
 
 
-
+#pragma pack(pop)
 }

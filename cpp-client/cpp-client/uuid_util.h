@@ -11,7 +11,7 @@ namespace client
 {
 
 
-	inline std::string convert_uuid__bytes_to_string(const char* uuidBytes)
+	inline std::string convert_uuid_bytes_to_string(const char* uuidBytes)
 	{
 		std::stringstream ss;
 		for (int i = 0; i < 16; i++) {

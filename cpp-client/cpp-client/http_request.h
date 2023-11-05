@@ -18,8 +18,7 @@ namespace client
             {
                 std::cout << "2100 Registered successfully\n";
                 response_payload<response2100> payload;
-                std::memcpy(&payload.client_id, response.payload.data(), config::client_id_size);   //response.header.payload_size
-
+                std::memcpy(&payload, response.payload.data(), sizeof(payload));
                 config::set_client_id(payload.client_id);   //sizeof(payload.client_id)
 
                 request<request1026> request_send_public_key;
@@ -42,69 +41,86 @@ namespace client
             {
                 std::cout << "2102 Accepted, Public key received, sending encrypted AES\n";
                 response_payload<response2102> payload;
-                
-                
-                std::memcpy(&payload.client_id, response.payload.data(), config::client_id_size); //identifier.id set inside response2100
+                std::memcpy(&payload, response.payload.data(), sizeof(payload));
 
                 identifier identifier;
                 identifier.name = config::name; //set inside main
                 identifier.private_key = convert_vector_to_ascii_string(config::private_key);
-
-                identifier.id = convert_uuid__bytes_to_string(config::client_id);
-                ////TODO: fix, bytes_to_hex_string, 
-                
+                identifier.id = convert_uuid_bytes_to_string(config::client_id);
                 set_identifier_write_to_file(identifier);
-
-                char new_client_id[16];
-                convert_uuid_string_to_bytes(config::identyfier.id, new_client_id);
 
 
                 std::string aes_encrypted_64(response.payload.begin() + config::client_id_size, response.payload.end());
-                auto aes_encrypted = decode_base64(aes_encrypted_64);
-
-
-
-
-                const std::vector<char> file_data =  read_data_from_file(config::read_from_file_name);
-
-
-
-                //std::vector<unsigned char> aaaaaa(response.payload.begin() + config::client_id_size, response.payload.end());
-                //auto aaa = decrypt_with_aes(aaaaaa, identifier.private_key);
-
-                //const std::vector<unsigned char> aes = decrypt_aes_key(config::private_key, aaa);
+                const std::string file_data =  read_data_from_file(config::read_from_file_name);
 
                 request<request1028> request_send_a_file;
                 request_send_a_file.payload.message_content =(encrypt_with_aes(file_data, aes_encrypted_64)) ;
                 request_send_a_file.payload.content_size = static_cast<uint32_t>(request_send_a_file.payload.message_content.size());
-                //auto dfile = decrypt_with_aes(request_send_a_file.payload.message_content, aes_encrypted_64);
 
+                std::cout << "file content:" << std::endl;
+                std::cout << file_data << std::endl;
+                std::cout << ":end" << std::endl;
+                config::file_checksum = calculate_numeric_checksum(file_data);
+                config::file_content_size = request_send_a_file.payload.content_size;
 
-                std::string serialized_content_size(reinterpret_cast<char*>(&request_send_a_file.payload.content_size), sizeof(request_send_a_file.payload.content_size));
-                request_send_a_file.custom_payload.append(serialized_content_size);
+                    // serialize custom_payload
+                request_send_a_file.custom_payload.append(std::string(reinterpret_cast<char*>(&request_send_a_file.payload.content_size), sizeof(request_send_a_file.payload.content_size)));
                 request_send_a_file.custom_payload.append(request_send_a_file.payload.message_content);
-                const uint32_t payload_custom_size = request_send_a_file.payload.message_content.size() + static_cast<uint32_t>(sizeof(request_send_a_file.payload.content_size));
                 client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_send_a_file);
-                    //TODO: handle response
                 handel_response(res);
             }
             break;
             case response_code::file_received_successfully_with_crc:  //response2103
             {
                 std::cout << "2103 Accepted receiving File with CRC\n";
-                response_payload<response2103> response{};
+                response_payload<response2103> payload;
+                std::memcpy(&payload, response.payload.data(), sizeof(payload));
+
+                
+
+
+                if(config::file_content_size == payload.content_size && config::file_checksum == payload.cksum)
+                {
+                    request<request1029> request_inform_checksum_ok_filename;
+                    strncpy_s(request_inform_checksum_ok_filename.payload.file_name, config::filename, sizeof(request_inform_checksum_ok_filename.payload.file_name));
+                    auto aa2a = request_inform_checksum_ok_filename.payload.file_name;
+                    client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_inform_checksum_ok_filename);
+                    handel_response(res);
+                }
+                else
+                {
+                    if (config::is_login_attempt_available())
+                    {
+                        request<request1030> request_inform_wrong_crc;
+                        strncpy_s(request_inform_wrong_crc.payload.file_name, config::filename, sizeof(request_inform_wrong_crc.payload.file_name));
+                        auto aa1a = request_inform_wrong_crc.payload.file_name;
+                        client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_inform_wrong_crc);
+                        handel_response(res);
+                    }
+                    else
+                    {
+                        request<request1031> request_inform_wrong_crc_for_4th_time;
+                        strncpy_s(request_inform_wrong_crc_for_4th_time.payload.file_name, config::filename, sizeof(request_inform_wrong_crc_for_4th_time.payload.file_name));
+                        auto aa3a = request_inform_wrong_crc_for_4th_time.payload.file_name;
+                        client::response res = send_request(config::transfer.ip_address, config::transfer.port, request_inform_wrong_crc_for_4th_time);
+                        handel_response(res);
+                    }
+                }
+
+
+
             }
             break;
             case response_code::approval_message_receiving:  //response2104
             {   //response to 1029 / 1031
                 std::cout << "2104 Accepted receiving Thanks message\n";
-                response_payload<response2104> response{};
+                response_payload<response2104> payload;
             }
             break;
             case response_code::approval_reconnection_request_send_crypted_aes:  //response2105
             {
                 std::cout << "2105 Accept registered attempt, send encrypted AES again\n";
-                response_payload<response2105> response{};
+                response_payload<response2105> payload;
             }
             break;
             case response_code::denined_reconnection_request_client_should_register_again:  //response2106
@@ -112,7 +128,7 @@ namespace client
                 std::cerr << "2106 all requests to login failed, \n"
                     "The client is not registered or there is an issue with public key, \n"
                     "The client have to registered.\n";
-                response_payload<response2106> response{};
+                response_payload<response2106> payload;
             }
             break;
             case response_code::global_server_error:  //response2107
