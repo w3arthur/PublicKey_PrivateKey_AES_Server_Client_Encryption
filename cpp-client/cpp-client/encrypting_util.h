@@ -50,29 +50,6 @@ namespace client
     }
     */
 
-    inline std::string read_data_from_file(const std::string& file_path)
-    {
-        std::ifstream file(file_path);
-        if (file) {
-            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            if(file.is_open())
-            {
-                file.close();
-            }
-            
-            return content;
-        }
-        else {
-            std::cerr << "Failed to open file: " << file_path << std::endl;
-            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            if (file.is_open())
-            {
-                file.close();
-            }
-            return "";
-        }
-    }
-
 
 
     inline void generate_rsa_keys(std::vector<unsigned char>& rsa_private_key, std::vector<unsigned char>& rsa_public_key)

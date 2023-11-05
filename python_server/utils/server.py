@@ -148,10 +148,6 @@ if __name__ != "__main__":
         decrypted_file = encrypting_util.decrypt_with_aes(
             byte_aes_key, package_aes_file_value.decode('utf-8'))
 
-        print('file content:')
-        print(decrypted_file)
-        print(':end')
-
         content_size: int = len(package_aes_file_value)
         filename = config.filename.encode('utf-8')
         cksum: int = encrypting_util.calculate_numeric_checksum(decrypted_file)

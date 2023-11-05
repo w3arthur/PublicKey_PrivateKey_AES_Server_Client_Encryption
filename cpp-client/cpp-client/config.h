@@ -83,8 +83,8 @@ namespace client
 		constexpr char me_info_file_name[100]{ "me.info" };
 		constexpr char read_from_file_name[100] = "file.txt";
 
-		uint32_t file_content_size{};
-		uint32_t file_checksum{};
+		uint32_t prv_file_content_size{};
+		uint32_t prv_file_checksum{};
 
 		void config_reset()
 		{
@@ -94,8 +94,8 @@ namespace client
 			transfer = {};
 			name = "";
 			private_key.clear();
-			file_content_size = 0;
-			file_checksum = 0;
+			prv_file_content_size = 0;
+			prv_file_checksum = 0;
 			set_client_id("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 			//TODO: remove me.info content
 		}

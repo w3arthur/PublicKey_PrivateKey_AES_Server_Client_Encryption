@@ -8,6 +8,30 @@
 
 namespace client
 {
+
+    inline std::string read_data_from_file(const std::string& file_path)
+    {
+        std::ifstream file(file_path);
+        if (file) {
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            if (file.is_open())
+            {
+                file.close();
+            }
+            return content;
+        }
+        else {
+            std::cerr << "Failed to open file: " << file_path << std::endl;
+            if (file.is_open())
+            {
+                file.close();
+            }
+            return "";
+        }
+    }
+
+
+
     inline transfer get_transfer_read_form_file()
     {
         std::ifstream input_file(config::transfer_info_file_name);

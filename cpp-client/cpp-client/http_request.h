@@ -57,11 +57,8 @@ namespace client
                 request_send_a_file.payload.message_content =(encrypt_with_aes(file_data, aes_encrypted_64)) ;
                 request_send_a_file.payload.content_size = static_cast<uint32_t>(request_send_a_file.payload.message_content.size());
 
-                std::cout << "file content:" << std::endl;
-                std::cout << file_data << std::endl;
-                std::cout << ":end" << std::endl;
-                config::file_checksum = calculate_numeric_checksum(file_data);
-                config::file_content_size = request_send_a_file.payload.content_size;
+                config::prv_file_checksum = calculate_numeric_checksum(file_data);
+                config::prv_file_content_size = request_send_a_file.payload.content_size;
 
                     // serialize custom_payload
                 request_send_a_file.custom_payload.append(std::string(reinterpret_cast<char*>(&request_send_a_file.payload.content_size), sizeof(request_send_a_file.payload.content_size)));
@@ -79,7 +76,7 @@ namespace client
                 
 
 
-                if(config::file_content_size == payload.content_size && config::file_checksum == payload.cksum)
+                if(config::prv_file_content_size == payload.content_size && config::prv_file_checksum == payload.cksum)
                 {
                     request<request1029> request_inform_checksum_ok_filename;
                     strncpy_s(request_inform_checksum_ok_filename.payload.file_name, config::filename, sizeof(request_inform_checksum_ok_filename.payload.file_name));
