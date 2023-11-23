@@ -87,7 +87,8 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
+      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.txt" "$(OutDir)"
+ xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
 mkdir $(SolutionDir)Run
 xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
@@ -113,7 +114,8 @@ xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
+      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.txt" "$(OutDir)"
+ xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
 mkdir $(SolutionDir)Run
 xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
@@ -134,7 +136,8 @@ xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
       <AdditionalDependencies>cryptopp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
+      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.txt" "$(OutDir)"
+ xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
 mkdir $(SolutionDir)Run
 xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
@@ -159,7 +162,8 @@ xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
       <AdditionalDependencies>cryptopp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
+      <Command>xcopy /y/d "$(SolutionDir)cpp-client\*.txt" "$(OutDir)"
+ xcopy /y/d "$(SolutionDir)cpp-client\*.info" "$(OutDir)"
 mkdir $(SolutionDir)Run
 xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     </PostBuildEvent>
@@ -170,6 +174,7 @@ xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
   <ItemGroup>
     <ClInclude Include="config.h" />
     <ClInclude Include="encrypting_util.h" />
+    <ClInclude Include="enums.h" />
     <ClInclude Include="files_util.h" />
     <ClInclude Include="http_request.h" />
     <ClInclude Include="http_request_util.h" />
@@ -177,11 +182,8 @@ xcopy /y/d "$(OutDir)" "$(SolutionDir)Run"</Command>
     <ClInclude Include="uuid_util.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="me.info" />
+    <None Include="file.bin" />
     <None Include="transfer.info" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="file.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

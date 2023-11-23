@@ -1,0 +1,19 @@
+יש להתקין את החבילות עבור השפות
+C++
+יש להפעיל מתוך התיקיה cpp-client
+את הקובץ install.bat 
+(או ליישם את הפעולות הכתובות שם להוספת dependencies)
+(נחוצות הספריות המקופלות)
+
+את תיקיית cpp-client
+יש לפתוח ב Visual Studio
+
+
+
+Python
+יש להפעיל מתוך התיקיה python_server
+את הקובץ install.bat
+(יש להתקין את requirements.txt)
+
+את תיקיית python_server
+יש לפתוח ב Visual Studio Code

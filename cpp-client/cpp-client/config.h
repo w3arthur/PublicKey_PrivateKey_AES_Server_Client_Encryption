@@ -3,9 +3,10 @@
 #include <vector>
 #include <string>
 
+
 namespace client
 {
-	//TODO: set sizes
+
 	struct transfer
 	{
 		//bool is_available;
@@ -44,18 +45,32 @@ namespace client
 		}
 	} ;
 
+	inline bool delete_file(const char* filename)
+	{
+		if (std::remove(filename) == 0)
+		{
+			std::cout << "File '" << filename << "' deleted successfully." << std::endl;
+			return true;
+		}
+		else
+		{
+			std::cerr << "Error: Unable to delete file '" << filename << "'." << std::endl;
+			return false;
+		}
+	}
+
 	namespace config
 	{
 		uint8_t login_tries = 0, file_seneding_tries = 0;
 		constexpr uint8_t max_login_tries = 3, max_file_send_tries = 3;
 
-		bool is_login_attempt_available()
+		inline bool is_login_attempt_available()
 		{
 			login_tries++;
 			return login_tries <= max_login_tries;
 		}
 
-		bool is_file_send_attempt_available()
+		inline bool is_file_send_attempt_available()
 		{
 			file_seneding_tries++;
 			return file_seneding_tries <= max_file_send_tries;
@@ -64,8 +79,6 @@ namespace client
 		client::identifier identyfier;
 		client::transfer transfer;
 		std::string name;
-
-		constexpr char filename[255] = "file.txt";
 
 		constexpr uint8_t client_version{ 3 };
 		constexpr uint8_t client_id_size = 16;
@@ -76,15 +89,15 @@ namespace client
 		}
 
 		constexpr int security_asymmetric_key_size{ 1024 };
-		constexpr int security_symmetric_key_size{ 128 };
-		std::vector<unsigned char> private_key{};
+		constexpr int security_symmetric_key_size{ 128 };	//generated in the server
 
+		constexpr char rsa_private_key_file[100] = { "priv.key" };
 		constexpr char transfer_info_file_name[100]{ "transfer.info" };
 		constexpr char me_info_file_name[100]{ "me.info" };
-		constexpr char read_from_file_name[100] = "file.txt";
 
 		uint32_t prv_file_content_size{};
 		uint32_t prv_file_checksum{};
+
 
 		void config_reset()
 		{
@@ -93,11 +106,10 @@ namespace client
 			identyfier= {};
 			transfer = {};
 			name = "";
-			private_key.clear();
 			prv_file_content_size = 0;
 			prv_file_checksum = 0;
 			set_client_id("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
-			//TODO: remove me.info content
+
 		}
 	}
 }

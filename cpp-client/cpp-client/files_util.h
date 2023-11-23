@@ -9,6 +9,14 @@
 namespace client
 {
 
+    inline bool is_file_exists(const char* filename)
+	{
+        const std::ifstream file_check(filename);
+        const bool is_file_exists_return = file_check.good();
+        //file_check.close(); // close not available in const std::ifstream
+        return is_file_exists_return;
+    }
+
     inline std::string read_data_from_file(const std::string& file_path)
     {
         std::ifstream file(file_path);
@@ -29,8 +37,6 @@ namespace client
             return "";
         }
     }
-
-
 
     inline transfer get_transfer_read_form_file()
     {
@@ -57,7 +63,6 @@ namespace client
 
         return transfer;
     }
-
 
     inline identifier get_identifier_read_form_file()
     {
@@ -95,7 +100,6 @@ namespace client
         return identifier;
     }
 
-
     inline void set_identifier_write_to_file(const identifier& identifier)
     {
         if (std::remove(config::me_info_file_name) != 0) 
@@ -113,36 +117,5 @@ namespace client
         me_info_file << identifier.private_key << std::endl;
         me_info_file.close();
     }
-
-
-
-    /*
-    std::string get_file_content(const std::string& file_path)
-    {
-
-        std::ifstream fileStream(file_path, std::ios::binary);
-        if (!fileStream.is_open()) {
-            std::cerr << "Failed to open file: " << file_path << std::endl;
-            return {};
-        }
-        std::string fileContents;
-        fileContents.assign((std::istreambuf_iterator<char>(fileStream)), (std::istreambuf_iterator<char>()));
-        fileStream.close();
-        return fileContents;
-    }
-    */
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

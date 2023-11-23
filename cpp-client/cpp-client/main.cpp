@@ -1,42 +1,25 @@
 #include <iostream>
 #include <fstream>
-#include <string>
 
-#include "files_util.h"
 #include "http_request.h"
 
 
 int main() 
 {
-    using namespace client;
-    
-    // TODO: add error handler
-    config::identyfier = client::get_identifier_read_form_file();
-    config::transfer = client::get_transfer_read_form_file();
-    if(config::identyfier.is_available)
-    {
-        config::name = config::identyfier.name;
-        convert_uuid_string_to_bytes(config::identyfier.id, config::client_id);
-    }
-    else
-    {
-        config::name = config::transfer.name;
-    }
-    
 
-    request<client::request1025> request;
-    request.payload.set_name(config::name);
+    client::client_handle_response_begin();
 
-    response res = send_request(config::transfer.ip_address, config::transfer.port, request);
-    handel_response(res);
-
-    std::cout << "\n" "ok\n" "Main running is done.\n";
+    std::cout << "\n Main running is done.\n";
 
 #if defined(_DEBUG)
     std::cout << "\n\nDebugging mode\nPress [Enter] to run main() again\n";
     std::cin.get();
-    config::config_reset();
+    client::config::config_reset();
+    //client::delete_file(client::config::rsa_private_key_file);
+    //client::delete_file(client::config::me_info_file_name);
     return main();
 #endif // DEBUG
+    std::cout << "Press enter to exit \n";
+    std::cin.get();
     return 0;
 }

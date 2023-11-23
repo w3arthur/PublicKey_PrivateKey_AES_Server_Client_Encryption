@@ -1,33 +1,40 @@
 #pragma once
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <sstream>
-#include <iomanip>
-#include <cstring>
 #include <vector>
-#include <utility>
 
 #include <cryptopp/aes.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/files.h>
-#include <cryptopp/crc.h>
-#include <cryptopp/hex.h>
-#include <cryptopp/md5.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/rsa.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/base64.h>
-#include <cryptopp/oaep.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/sha.h>
 
-#include "http_request.h"
+#include "config.h"
 
 namespace client
 {
 
+    std::string uuid_string_to_bytes(const std::string& uuid_string) {
 
-    uint32_t calculate_numeric_checksum(const std::string& data) {
+        std::string str;
+        CryptoPP::StringSource ss(uuid_string, true,
+            new CryptoPP::HexDecoder(
+                new CryptoPP::StringSink(str)
+            )
+        );
+
+        return str;
+    }
+
+
+    uint32_t calculate_numeric_checksum(const std::string& data)
+	{
         CryptoPP::SHA256 hash;
         std::vector<uint8_t> digest(CryptoPP::SHA256::DIGESTSIZE);
 
@@ -36,21 +43,53 @@ namespace client
 
         // Extract the first 4 bytes of the hash as a uint32_t
         const uint32_t checksum = *(reinterpret_cast<uint32_t*>(digest.data()));
-
         return checksum;
     }
-    /*
-    inline uint32_t calculate_checksum(const std::string& data)
-	{
-        uint32_t checksum = 0;
-        for (char c : data) {
-            checksum = (checksum * 31) + static_cast<uint8_t>(c);  // Simple hash function
+
+    inline std::vector<unsigned char> decode_to_base64(const std::string& input)
+    {
+        std::string decoded;
+        CryptoPP::StringSource
+        (
+            input,
+            true,
+            new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded))
+        );
+
+        std::vector<unsigned char> decoded_string(decoded.begin(), decoded.end());
+        return decoded_string;
+    }
+
+    inline std::string convert_vector_to_ascii_string(const std::vector<unsigned char>& privateKeyData)
+    {
+        CryptoPP::ByteQueue privateKeyQueue;
+        privateKeyQueue.Put(privateKeyData.data(), privateKeyData.size());
+
+        std::string encodedPrivateKey;
+        CryptoPP::Base64URLEncoder base64Encoder;
+        privateKeyQueue.CopyTo(base64Encoder);
+        base64Encoder.MessageEnd();
+
+        if (const CryptoPP::word64 size = base64Encoder.MaxRetrievable(); size)
+        {
+            encodedPrivateKey.resize(size);
+            base64Encoder.Get(reinterpret_cast<CryptoPP::byte*>(&encodedPrivateKey[0]), encodedPrivateKey.size());
         }
-        return checksum;
+        return encodedPrivateKey;
     }
-    */
 
+    inline std::string convert_vector_to_base64(const std::vector<unsigned char>& privateKeyData)   //with = in the end
+	{
+        CryptoPP::ByteQueue privateKeyQueue;
+        privateKeyQueue.Put(privateKeyData.data(), privateKeyData.size());
 
+        std::string encodedPrivateKey;
+        CryptoPP::Base64Encoder base64Encoder(new CryptoPP::StringSink(encodedPrivateKey), false);
+        privateKeyQueue.CopyTo(base64Encoder);
+        base64Encoder.MessageEnd();
+
+        return encodedPrivateKey;
+    }
 
     inline void generate_rsa_keys(std::vector<unsigned char>& rsa_private_key, std::vector<unsigned char>& rsa_public_key)
     {
@@ -114,87 +153,52 @@ namespace client
         }
     }
 
-
-
-
-    inline std::vector<unsigned char> decode_base64(const std::string& input)
-	{
-        std::string decoded;
-        CryptoPP::StringSource
-    	(
-            input,
-            true,
-            new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded))
-        );
-
-        std::vector<unsigned char> decoded_string(decoded.begin(), decoded.end());
-        return decoded_string;
-    }
-
-
-    inline std::vector<unsigned char> decrypt_aes_key(const std::vector<unsigned char>& rsa_private_key, const std::vector<unsigned char>& encrypted_aes_key)
+    inline void save_rsa_private_keys_to_file(const std::vector<unsigned char>& rsa_private_key, const char* filename)
     {
-        CryptoPP::AutoSeededRandomPool rng;
-        CryptoPP::RSA::PrivateKey privateKey;
+        CryptoPP::FileSink file(filename);
 
-        // Load the private RSA key from the vector
+        // Decode the private key from the vector and save it to the file
         CryptoPP::ByteQueue privateKeyQueue;
         privateKeyQueue.Put(rsa_private_key.data(), rsa_private_key.size());
+
+        CryptoPP::RSA::PrivateKey privateKey;
         privateKey.Load(privateKeyQueue);
 
-        // Create an RSAES_OAEP_SHA_Decryptor with the private key
-        CryptoPP::RSAES_OAEP_SHA_Decryptor rsaDecryptor(privateKey);
-
-        // Decode the base64-encoded encrypted AES key
-        std::string encoded_aes_key(encrypted_aes_key.begin(), encrypted_aes_key.end());
-        std::string decrypted_aes_key;
-
-        try 
-        {
-            CryptoPP::StringSource
-        	(
-                encoded_aes_key, 
-                true,
-                new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decrypted_aes_key))
-            );
-        }
-        catch (const std::exception& e) 
-        {
-            // Handle base64 decoding error
-            std::cerr << "Error decoding base64: " << e.what() << std::endl;
-            return std::vector<unsigned char>();
-        }
-
-        // Convert the decrypted AES key to a vector of unsigned char
-        std::vector<unsigned char> decrypted_aes_key_bytes(decrypted_aes_key.begin(), decrypted_aes_key.end());
-
-        return decrypted_aes_key_bytes;
+        privateKey.DEREncode(file);
+        file.MessageEnd();
     }
 
-
-
-
-	inline std::string convert_vector_to_ascii_string(const std::vector<unsigned char>& privateKeyData)
+    inline std::vector<unsigned char> load_rsa_private_key_from_file(const std::string& filename)
 	{
-	    CryptoPP::ByteQueue privateKeyQueue;
-	    privateKeyQueue.Put(privateKeyData.data(), privateKeyData.size());
+        std::vector<unsigned char> rsa_private_key;
+        CryptoPP::FileSource file(filename.c_str(), true);
+        size_t keySize = file.MaxRetrievable();
+        rsa_private_key.resize(keySize);
+        file.Get(rsa_private_key.data(), keySize);
+        return rsa_private_key;
+    }
 
-	    std::string encodedPrivateKey;
-	    CryptoPP::Base64URLEncoder base64Encoder;
-	    privateKeyQueue.CopyTo(base64Encoder);
-	    base64Encoder.MessageEnd();
-	    
-	    if (const CryptoPP::word64 size = base64Encoder.MaxRetrievable(); size) 
-	    {
-	        encodedPrivateKey.resize(size);
-	        base64Encoder.Get(reinterpret_cast<CryptoPP::byte*>(&encodedPrivateKey[0]), encodedPrivateKey.size());
-	    }
-	    return encodedPrivateKey;
-	}
+    std::vector<unsigned char> decrypt_aes_key(const std::vector<unsigned char>& rsa_private_key1, const std::vector<unsigned char>& encrypted_aes_key) {
+        // Convert the encoded RSA private key to a std::string
+        std::string rsa_private_key(rsa_private_key1.begin(), rsa_private_key1.end());
 
+        CryptoPP::AutoSeededRandomPool rng;
+        CryptoPP::RSAES_OAEP_SHA256_Decryptor decryptor; // Use SHA-256
 
-    
+        // Load the private RSA key from the std::string
+        CryptoPP::ByteQueue privateKeyQueue;
+        privateKeyQueue.Put(reinterpret_cast<const CryptoPP::byte*>(rsa_private_key.data()), rsa_private_key.size());
+        decryptor.AccessKey().Load(privateKeyQueue);
 
+        // Decrypt the AES key
+        std::string aes_key;
+        CryptoPP::StringSource(encrypted_aes_key.data(), encrypted_aes_key.size(), true,
+            new CryptoPP::PK_DecryptorFilter(rng, decryptor, new CryptoPP::StringSink(aes_key)
+            ));
+
+        std::vector<unsigned char> aes_key_vector(aes_key.begin(), aes_key.end());
+        return aes_key_vector;
+    }
 
     std::vector<unsigned char> decode_aes_key(const std::string& aesKeyBase64)
 	{
@@ -222,9 +226,6 @@ namespace client
         std::vector<unsigned char> aesKey(decodedString.begin(), decodedString.end());
         return aesKey;
     }
-
-
-
 
     std::string encrypt_with_aes(const std::string& plaintext, const std::string& aesKey)
     {
@@ -261,31 +262,5 @@ namespace client
 
         return ciphertextString;
     }
-
-
-
-
-    //TODO: check if requires
-
-    inline void saveRSAKeysToFile(const CryptoPP::RSA::PublicKey& key, const std::string& filename)
-    {
-        CryptoPP::FileSink file(filename.c_str());
-        key.DEREncode(file);
-        file.MessageEnd();
-    }
-
-    inline void saveRSAKeysToFile(const CryptoPP::RSA::PrivateKey& key, const std::string& filename)
-    {
-        CryptoPP::FileSink file(filename.c_str());
-        key.DEREncode(file);
-        file.MessageEnd();
-    }
-
-
-
-
-
-
-
 
 }

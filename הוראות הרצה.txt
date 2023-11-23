@@ -1,0 +1,15 @@
+Python
+יש להריץ קודם מהתיקיה ל C++
+מהתיקיה python_server
+ב Visual Studio Code
+ניתן להריץ את הקובץ main.py
+או ע"י python main.py
+או run.bat
+
+C++
+מהתיקיה cpp-client
+ב Visual Studio
+ניתן להריץ במצב Release x64
+או את תוצאות הקימפול האחרון בתיקיה Run/cpp-client.exe
+או run.bat
+*עדיף להריץ דרך Visual Studio

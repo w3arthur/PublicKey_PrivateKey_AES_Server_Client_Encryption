@@ -1,93 +1,89 @@
-if __name__ != "__main__":
-    import struct
-    import config  # as config
+import struct
+import config  # as config
 
-    # TODO: fix serialize function
+# TODO: fix serialize function
 
-    class Header:
-        version: int = config.server_version
-        code: int = None
-        payload_size: int = None
 
-        def __init__(self, code, payload_size):
-            self.code = code
-            self.payload_size = payload_size
+class Header:
+    version: int = config.server_version
+    code: int = None
+    payload_size: int = None
 
-        def serialize(self):
-            return struct.pack("!BHL", self.version, self.code, self.payload_size)
-        # def size(self): #set inside config
+    def __init__(self, code, payload_size):
+        self.code = code
+        self.payload_size = payload_size
 
-    class Payload2100:
-        client_id: str = None
+    def serialize(self):
+        return struct.pack("!BHL", self.version, self.code, self.payload_size)
 
-        def __init__(self, client_id):
-            self.client_id = client_id
+    # def size(self): #set inside config
 
-        def serialize(self):
-            return struct.pack("16s", self.client_id)
 
-        def size(self):
-            return 16
+class Payload2100:
+    client_id: str = None
 
-    class Payload2101:
-        # Registration failed
-        pass
+    def __init__(self, client_id):
+        self.client_id = client_id
 
-    class Payload2102(Payload2100):
-        # client_id
-        encrypted_aes_key = None
+    def serialize(self):
+        return struct.pack("16s", self.client_id)
 
-        def __init__(self, client_id, encrypted_aes_key):
-            self.client_id = client_id
-            self.encrypted_aes_key = encrypted_aes_key
+    def size(self):
+        return 16
 
-        def serialize(self):
-            count = struct.pack("16s", self.client_id) + self.encrypted_aes_key.encode(
-                'utf-8')
-            return count
 
-        def size(self):
-            return 16 + len(self.encrypted_aes_key.encode(
-                'utf-8'))   # TODO: improve
+class Payload2101:
+    pass  # Registration failed
 
-    class Payload2103(Payload2100):
-        # client_id
-        content_size = None
-        filename = None
-        cksum = None
 
-        def __init__(self, client_id, content_size, filename, cksum):
-            self.client_id = client_id
-            self.content_size = content_size
-            self.filename = filename
-            self.cksum = cksum
+class Payload2102(Payload2100):
+    # client_id
+    encrypted_aes_key = None
 
-        def serialize(self):
-            return struct.pack("16s", self.client_id) + struct.pack("!I", self.content_size) + struct.pack("255s", self.filename) + struct.pack("I", self.cksum) + struct.pack("I", 5)
+    def __init__(self, client_id, encrypted_aes_key):
+        self.client_id = client_id
+        self.encrypted_aes_key = encrypted_aes_key
 
-        def size(self):
-            return len(self.serialize())  # 16 + 4 + 255 + 4
+    def serialize(self):
+        count = struct.pack("16s", self.client_id) + struct.pack(
+            f"{len(self.encrypted_aes_key)}s", self.encrypted_aes_key)
+        return count
 
-    class Payload2104(Payload2100):
-        # client_id
+    def size(self):
+        return 16 + len(self.encrypted_aes_key)   # TODO: improve
 
-        def __init__(self, client_id):
-            self.client_id = client_id
 
-        def serialize(self):
-            return struct.pack("!16s", self.client_id)
+class Payload2103(Payload2100):
+    # client_id
+    content_size = None
+    filename = None
+    cksum = None
 
-        def size(self):
-            return 16
+    def __init__(self, client_id, content_size, filename, cksum):
+        self.client_id = client_id
+        self.content_size = content_size
+        self.filename = filename
+        self.cksum = cksum
 
-    class Payload2105(Payload2100):
-        # client_id
-        pass
+    def serialize(self):
+        return struct.pack("16sI255s", self.client_id, self.content_size, self.filename) + struct.pack("I", self.cksum)
 
-    class Payload2106(Payload2100):
-        # client_id
-        pass
+    def size(self):
+        return 279  # len(self.serialize())  # 16 + 4 + 255 + 4
 
-    class Payload2107:
-        # Error
-        pass
+
+class Payload2104(Payload2100):
+    pass  # client_id
+
+
+class Payload2105(Payload2100):
+    # aes reconnection key
+    pass  # client_id
+
+
+class Payload2106(Payload2100):
+    pass  # client_id
+
+
+class Payload2107:
+    pass  # Error
